@@ -208,8 +208,8 @@ function DOBandEncounter($pc_eid)
      global $event_date,$info_msg;
      // Save new DOB if it's there.
      $patient_dob = trim($_POST['form_dob'] ?? null);
-     $tmph = $_POST['form_hour'] + 0;
-     $tmpm = $_POST['form_minute'] + 0;
+     $tmph = (int)$_POST['form_hour'] + 0;
+     $tmpm = (int)$_POST['form_minute'] + 0;
     if (!empty($_POST['form_ampm']) && ($_POST['form_ampm'] == '2' && $tmph < 12)) {
         $tmph += 12;
     }
@@ -336,8 +336,8 @@ if (!empty($_POST['form_action']) && ($_POST['form_action'] == "duplicate" || $_
         $tmpm = 0;
         $duration = 24 * 60;
     } else {
-        $tmph = $_POST['form_hour'] + 0;
-        $tmpm = $_POST['form_minute'] + 0;
+        $tmph = (int)$_POST['form_hour'] + 0;
+        $tmpm = (int)$_POST['form_minute'] + 0;
         if (!empty($_POST['form_ampm']) && ($_POST['form_ampm'] == '2' && $tmph < 12)) {
             $tmph += 12;
         }
@@ -1591,7 +1591,7 @@ if ($_GET['group'] === true && $have_group_global_enabled) { ?>
             $defaultProvider = $_SESSION['authUserID'];
           // or, if we have chosen a provider in the calendar, default to them
           // choose the first one if multiple have been selected
-            if (is_array($_SESSION['pc_username'])) {
+            if (is_array(isset($_SESSION['pc_username']))) {
                 if (count($_SESSION['pc_username']) >= 1) {
                     // get the numeric ID of the first provider in the array
                     $pc_username = $_SESSION['pc_username'];

@@ -60,7 +60,7 @@ class CsrfUtils
             return false;
         } elseif (empty($token)) {
             return false;
-        } elseif (hash_equals($currentToken, $token)) {
+        } elseif (hash_equals($currentToken, (string)$token)) {
             return true;
         } else {
             return false;

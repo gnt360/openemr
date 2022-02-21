@@ -644,14 +644,14 @@ foreach (
  <tr id='row_lot_number'>
   <td class="font-weight-bold text-nowrap align-top"><?php echo xlt('Lot Number'); ?>:</td>
   <td>
-   <input class="form-control w-100" type='text' size='40' name='form_lot_number' maxlength='40' value='<?php echo attr($row['lot_number']) ?>' />
+   <input class="form-control w-100" type='text' size='40' name='form_lot_number' maxlength='40' value='<?php echo attr($row['lot_number'] ?? null) ?>' />
   </td>
  </tr>
 
  <tr id='row_manufacturer'>
   <td class="font-weight-bold text-nowrap align-top"><?php echo xlt('Manufacturer'); ?>:</td>
   <td>
-   <input class="form-control w-100" type='text' size='40' name='form_manufacturer' maxlength='250' value='<?php echo attr($row['manufacturer']) ?>' />
+   <input class="form-control w-100" type='text' size='40' name='form_manufacturer' maxlength='250' value='<?php echo attr($row['manufacturer'] ?? null) ?>' />
   </td>
  </tr>
 
@@ -659,7 +659,7 @@ foreach (
   <td class="font-weight-bold text-nowrap align-top"><?php echo xlt('Expiration'); ?>:</td>
   <td>
    <input type='text' class='datepicker form-control w-50' size='10' name='form_expiration' id='form_expiration'
-    value='<?php echo attr($row['expiration']) ?>'
+    value='<?php echo attr($row['expiration'] ?? null) ?>'
     title='<?php echo xla('yyyy-mm-dd date of expiration'); ?>' />
   </td>
  </tr>
@@ -710,7 +710,7 @@ generate_form_field(
     array('data_type' => 14, 'field_id' => 'vendor_id',
     'list_id' => '', 'edit_options' => 'V',
     'description' => xl('Address book entry for the vendor')),
-    $row['vendor_id']
+    $row['vendor_id'] ?? null
 );
 ?>
   </td>
@@ -723,7 +723,7 @@ generate_form_field(
 if (
     !genWarehouseList(
         "form_warehouse_id",
-        $row['warehouse_id'],
+        $row['warehouse_id'] ?? null,
         xl('Location of this lot'),
         "form-control"
     )
@@ -737,7 +737,7 @@ if (
  <tr id='row_on_hand'>
   <td class="font-weight-bold text-nowrap align-top"><?php echo xlt('On Hand'); ?>:</td>
   <td>
-    <span><?php echo text($row['on_hand'] + 0); ?></span>
+    <span><?php echo text($row['on_hand'] ?? 0 + 0); ?></span>
   </td>
  </tr>
 

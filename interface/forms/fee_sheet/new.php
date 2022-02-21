@@ -200,7 +200,7 @@ function echoServiceLines()
             echo "  <td class='billcell text-center' $usbillstyle><input type='checkbox'" .
             ($li['auth'] ? " checked" : "") . " disabled /></td>\n";
 
-            if (!empty($GLOBALS['gbl_auto_create_rx'])) {
+            if (!empty(isset($GLOBALS['gbl_auto_create_rx']))) {
                 echo "  <td class='billcell text-center'>&nbsp;</td>\n";
             }
 
@@ -294,7 +294,7 @@ function echoServiceLines()
             echo "  <td class='billcell text-center' $usbillstyle><input type='checkbox' name='bill[" . attr($lino) . "][auth]' " .
             "value='1'" . ($li['auth'] ? " checked" : "") . " /></td>\n";
 
-            if (!empty($GLOBALS['gbl_auto_create_rx'])) {
+            if (!empty(isset($GLOBALS['gbl_auto_create_rx']))) {
                 echo "  <td class='billcell text-center'>&nbsp;</td>\n";   // KHY: May need to confirm proper location of this cell
             }
 
@@ -413,7 +413,7 @@ function echoProductLines()
             //
             echo "  <td class='billcell text-center' $usbillstyle>&nbsp;</td>\n"; // note codes
             echo "  <td class='billcell text-center' $usbillstyle>&nbsp;</td>\n"; // auth
-            if ($GLOBALS['gbl_auto_create_rx']) {
+            if (isset($GLOBALS['gbl_auto_create_rx'])) {
                 echo "  <td class='billcell text-center'><input type='checkbox'" . // rx
                 " disabled /></td>\n";
             }
@@ -460,7 +460,7 @@ function echoProductLines()
             //
             echo "  <td class='billcell text-center' $usbillstyle>&nbsp;</td>\n"; // note codes
             echo "  <td class='billcell text-center' $usbillstyle>&nbsp;</td>\n"; // auth
-            if ($GLOBALS['gbl_auto_create_rx']) {
+            if (isset($GLOBALS['gbl_auto_create_rx'])) {
                 echo "  <td class='billcell text-center'>" .
                 "<input type='checkbox' name='prod[" . attr($lino) . "][rx]' value='1'" .
                 ($rx ? " checked" : "") . " /></td>\n";
@@ -1199,7 +1199,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                     <td class='billcell text-center font-weight-bold' <?php echo $liprovstyle; ?>><?php echo xlt('Provider/Warehouse');?></td>
                                     <td class='billcell text-center font-weight-bold'<?php echo $usbillstyle; ?>><?php echo xlt('Note Codes');?></td>
                                     <td class='billcell text-center font-weight-bold'<?php echo $usbillstyle; ?>><?php echo xlt('Auth');?></td>
-                                    <?php if (!empty($GLOBALS['gbl_auto_create_rx'])) { ?>
+                                    <?php if (!empty(isset($GLOBALS['gbl_auto_create_rx']))) { ?>
                                         <td class='billcell text-center font-weight-bold'><?php echo xlt('Rx'); ?></td>
                                     <?php } ?>
                                     <td class='billcell text-center font-weight-bold'><?php echo xlt('Delete');?></td>
@@ -1396,7 +1396,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
 
                                     if (!empty($_POST['prod'])) {
                                         $pline = $_POST['prod']["$prod_lino"];
-                                        $del   = $pline['del']; // preserve Delete if checked
+                                        $del   = $pline['del'] ?? null; // preserve Delete if checked
                                         if ($pline['sale_id'] && !$srow['billed']) {
                                             $convert_units = false;
                                             $units = intval(trim($pline['units']));

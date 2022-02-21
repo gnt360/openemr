@@ -1078,8 +1078,8 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                                         $iter['enc_pid']
                                         )
                                     );
-                                    $is_edited = $c['status'] ? 'btn-success' : 'btn-warning';
-                                    $bname = $c['status'] ? xl('Reviewed') : xl('Review UB04');
+                                    $is_edited = isset($c['status']) ? 'btn-success' : 'btn-warning';
+                                    $bname = isset($c['status']) ? xl('Reviewed') : xl('Review UB04');
                                     $lhtml .= "<a class='btn btn-sm $is_edited' role='button' onclick='popUB04(" . attr_js($iter['enc_pid']) . "," . attr_js($iter['enc_encounter']) . "); return false;'>" . text($bname) . "</a>";
                                 }
                                 $lhtml .= "</div>";

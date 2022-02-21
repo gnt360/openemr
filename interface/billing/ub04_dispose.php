@@ -19,7 +19,7 @@ use OpenEMR\Pdf\PdfCreator;
 
 function ub04_dispose()
 {
-    $dispose = isset($_POST['handler']) ? $_POST['handler'] : $_GET['handler'];
+    $dispose = isset($_POST['handler']) ? $_POST['handler'] : isset($_GET['handler']);
     if ($dispose) {
         if ($dispose == "edit_save") {
             $ub04id = isset($_POST['ub04id']) ? $_POST['ub04id'] : $_GET['ub04id'];

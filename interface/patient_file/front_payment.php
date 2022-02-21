@@ -169,7 +169,7 @@ if (!empty($_POST['form_save'])) {
 
     $form_pid = $_POST['form_pid'];
     $form_method = trim($_POST['form_method']);
-    $form_source = trim($_POST['form_source']);
+    $form_source = trim(isset($_POST['form_source']));
     $patdata = getPatientData($form_pid, 'fname,mname,lname,pubpid');
     $NameNew = $patdata['fname'] . " " . $patdata['lname'] . " " . $patdata['mname'];
 

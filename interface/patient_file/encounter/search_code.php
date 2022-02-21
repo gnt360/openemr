@@ -84,7 +84,7 @@ if (isset($_POST["mode"]) && $_POST["mode"] == "search" && $_POST["text"] != "")
     "ORDER BY code " .
     " LIMIT " . escape_limit(($M + 1)) .
     "";
-
+    $result[] = null;
     if ($res = sqlStatement($sql, array($pid, "%" . $_POST["text"] . "%", "%" . $_POST["text"] . "%", $code_types[$code_type]['id']))) {
         for ($iter = 0; $row = sqlFetchArray($res); $iter++) {
             $result[$iter] = $row;
@@ -119,16 +119,16 @@ if (isset($_POST["mode"]) && $_POST["mode"] == "search" && $_POST["text"] != "")
                 echo "<div class='oneresult' style='padding: 3px 0 3px 0;'>";
                 echo "<a target='" . xla('Diagnosis') . "' href='diagnosis.php?mode=add" .
                     "&type="     . attr_url($code_type) .
-                    "&code="     . attr_url($iter["code"]) .
-                    "&modifier=" . attr_url($iter["modifier"]) .
-                    "&units="    . attr_url($iter["units"]) .
+                    "&code="     . attr_url($iter["code"] ?? null) .
+                    "&modifier=" . attr_url($iter["modifier"] ?? null) .
+                    "&units="    . attr_url($iter["units"] ?? null) .
                     // "&fee="      . attr_url($iter["fee"]) .
-                    "&fee="      . attr_url($iter['pr_price']) .
-                    "&text="     . attr_url($iter["code_text"]) .
+                    "&fee="      . attr_url($iter['pr_price'] ?? null) .
+                    "&text="     . attr_url($iter["code_text"] ?? null) .
                     "&csrf_token_form=" . attr_url(CsrfUtils::collectCsrfToken()) .
                     "' onclick='top.restoreSession()'>";
-                echo ucwords("<b>" . text(strtoupper($iter["code"])) . "&nbsp;" . text($iter['modifier']) .
-                    "</b>" . " " . text(strtolower($iter["code_text"])));
+                echo ucwords("<b>" . text(strtoupper($iter["code"] ?? null)) . "&nbsp;" . text($iter['modifier'] ?? null) .
+                    "</b>" . " " . text(strtolower($iter["code_text"] ?? null)));
                 echo "</a><br />\n";
                 echo "</div>";
 

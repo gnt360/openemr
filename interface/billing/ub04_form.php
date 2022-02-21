@@ -21,8 +21,8 @@ if ($isAuthorized !== true) {
     $isAuthorized = 0;
     $pid = $_REQUEST['pid'] ? $_REQUEST['pid'] : '0';
     $encounter = $_REQUEST['enc'] ? $_REQUEST['enc'] : '0';
-    $action = $_REQUEST['action'] ? $_REQUEST['action'] : false;
-    $payerid = $_REQUEST['id'] ? $_REQUEST['id'] : '0';
+    $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : false;
+    $payerid = isset($_REQUEST['id']) ? $_REQUEST['id'] : '0';
     $imgurl = $GLOBALS['images_static_relative'];
     if ($action == 'payer_defaults') {
         $ub04id = get_payer_defaults($payerid);

@@ -250,7 +250,7 @@ if (in_array($sdate, $holidays)) {
 // work to do.
 
 if (isset($_REQUEST['cktime'])) {
-    $cktime = 0 + $_REQUEST['cktime'];
+    $cktime = 0 + (int)$_REQUEST['cktime'];
     $ckindex = (int) ($cktime * 60 / $slotsecs);
     for ($j = $ckindex; $j < $ckindex + $evslots; ++$j) {
         if ($slots[$j] >= 4) {

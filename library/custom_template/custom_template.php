@@ -182,9 +182,9 @@ if (empty($isNN) && empty($rowContext)) {
 <body class="body_top">
 <div class="container-fluid">
   <input type="hidden" name="list_id" id="list_id" value="<?php echo $rowContext['cl_list_id']; ?>" />
-  <?php if ($rowContext['cl_list_item_long'] || !$isNN) { ?>
+  <?php if (isset($rowContext['cl_list_item_long']) || !$isNN) { ?>
   <!-- don't escape $contextName it's html -->
-  <h3 class="text-center"><?php echo $rowContext['cl_list_item_long'] ? text($rowContext['cl_list_item_long']) : $contextName; ?></h3>
+  <h3 class="text-center"><?php echo isset($rowContext['cl_list_item_long']) ? text($rowContext['cl_list_item_long']) : $contextName; ?></h3>
     <div id="tab1" class="tabset_content tabset_content_active">
         <form id="mainForm">
             <input type="hidden" name="type" id="type" value="<?php echo  attr($type); ?>" />

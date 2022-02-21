@@ -1311,7 +1311,7 @@ class FeeSheet
                         }
 
                           // Delete Rx if $rxid and flag not set.
-                        if ($GLOBALS['gbl_auto_create_rx'] && $rxid && empty($iter['rx'])) {
+                        if (isset($GLOBALS['gbl_auto_create_rx']) && $rxid && empty($iter['rx'])) {
                             sqlStatement("UPDATE drug_sales SET prescription_id = 0 WHERE sale_id = ?", array($sale_id));
                             sqlStatement("DELETE FROM prescriptions WHERE id = ?", array($rxid));
                         }

@@ -104,7 +104,7 @@ class InvoiceSummary
         while ($row = sqlFetchArray($res)) {
             $amount = sprintf('%01.2f', $row['fee']);
             $code = 'PROD:' . $row['drug_id'];
-            $codes[$code]['chg'] += $amount;
+            $codes[$code ?? null]['chg' ?? null] ?? $codes += $amount;
             $codes[$code]['bal'] += $amount;
             // Add the details if they want 'em.
             if ($with_detail) {

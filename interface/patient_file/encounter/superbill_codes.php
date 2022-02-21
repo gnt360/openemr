@@ -20,16 +20,16 @@ use OpenEMR\Core\Header;
 //the number of rows to display before resetting and starting a new column:
 $N = 10;
 
-$mode     = $_GET['mode'];
-$type     = $_GET['type'];
-$modifier = $_GET['modifier'];
-$units    = $_GET['units'];
-$fee      = $_GET['fee'];
-$code     = $_GET['code'];
-$text     = $_GET['text'];
+$mode     = isset($_GET['mode']);
+$type     = isset($_GET['type']);
+$modifier = isset($_GET['modifier']);
+$units    = isset($_GET['units']);
+$fee      = isset($_GET['fee']);
+$code     = isset($_GET['code']);
+$text     = isset($_GET['text']);
 
 if (isset($mode)) {
-    if (!CsrfUtils::verifyCsrfToken($_GET["csrf_token_form"])) {
+    if (!CsrfUtils::verifyCsrfToken(isset($_GET["csrf_token_form"]))) {
         CsrfUtils::csrfNotVerified();
     }
 

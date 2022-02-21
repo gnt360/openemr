@@ -18,15 +18,15 @@ use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
 
-$mode              = $_REQUEST['mode'];
-$type              = $_REQUEST['type'];
-$code              = $_REQUEST['code'];
-$modifier          = $_REQUEST['modifier'];
-$units             = $_REQUEST['units'];
-$fee               = $_REQUEST['fee'];
-$text              = $_REQUEST['text'];
-$payment_method    = $_REQUEST['payment_method'];
-$insurance_company = $_REQUEST['insurance_company'];
+$mode              = isset($_REQUEST['mode']);
+$type              = isset($_REQUEST['type']);
+$code              = isset($_REQUEST['code']);
+$modifier          = isset($_REQUEST['modifier']);
+$units             = isset($_REQUEST['units']);
+$fee               = isset($_REQUEST['fee']);
+$text              = isset($_REQUEST['text']);
+$payment_method    = isset($_REQUEST['payment_method']);
+$insurance_company = isset($_REQUEST['insurance_company']);
 
 $target = '_parent';
 
@@ -44,7 +44,7 @@ if ($payment_method == "insurance") {
 }
 
 if (isset($mode)) {
-    if (!CsrfUtils::verifyCsrfToken($_GET["csrf_token_form"])) {
+    if (!CsrfUtils::verifyCsrfToken(isset($_GET["csrf_token_form"]))) {
         CsrfUtils::csrfNotVerified();
     }
 

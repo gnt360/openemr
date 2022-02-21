@@ -39,12 +39,12 @@ function send_email($subject, $body)
     }
 }
 
-$sale_id         = $_REQUEST['sale_id'];
-$drug_id         = $_REQUEST['drug_id'];
-$prescription_id = $_REQUEST['prescription'];
-$quantity        = $_REQUEST['quantity'];
-$fee             = $_REQUEST['fee'];
-$user            = $_SESSION['authUser'];
+$sale_id         = isset($_REQUEST['sale_id']);
+$drug_id         = isset($_REQUEST['drug_id']);
+$prescription_id = isset($_REQUEST['prescription']);
+$quantity        = isset($_REQUEST['quantity']);
+$fee             = isset($_REQUEST['fee']);
+$user            = isset($_SESSION['authUser']);
 
 if (!AclMain::aclCheckCore('admin', 'drugs')) {
     die(xl('Not authorized'));

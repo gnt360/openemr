@@ -125,7 +125,7 @@ function set_related_target(codetype, code, selector, codedesc, target_element, 
                 if (s.indexOf(codetype + ':') == 0 || s.indexOf(';' + codetype + ':') > 0) {
                     return <?php echo xlj('A code of this type is already selected. Erase the field first if you need to replace it.') ?>;
                 }
-            }     
+            }
             if (s.length > 0) {
                 s += ';';
             }
@@ -488,7 +488,7 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
 
     <div class="form-group mt-3">
         <label class="font-weight-bold"><?php echo xlt('RXCUI Code'); ?>:</label>
-        <input class="form-control w-100" type="text" size="50" name="form_drug_code" value='<?php echo attr($row['drug_code']) ?>'
+        <input class="form-control w-100" type="text" size="50" name="form_drug_code" value='<?php echo attr($row['drug_code'] ?? null) ?>'
              onclick='sel_related("?codetype=RXCUI&limit=1&target_element=form_drug_code")' title='<?php echo xla('Click to select RXCUI code'); ?>' data-toggle="tooltip" data-placement="top" readonly />
     </div>
 
@@ -632,7 +632,7 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
             </tr>
             <?php
             $blank_lines = $GLOBALS['sell_non_drug_products'] == 2 ? 1 : 3;
-            if ($tres) {
+            if (isset($tres)) {
                 while ($trow = sqlFetchArray($tres)) {
                     $blank_lines = $GLOBALS['sell_non_drug_products'] == 2 ? 0 : 1;
                     $selector = $trow['selector'];
