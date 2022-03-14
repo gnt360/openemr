@@ -2012,6 +2012,12 @@ $GLOBALS_METADATA = array(
             '7200',                           // default
             xl('Maximum idle time in seconds before logout. Default is 7200 (2 hours).')
         ),
+        'portal_timeout' => array(
+            xl('Portal Idle Session Timeout Seconds'),
+            'num',                            // data type
+            '1800',                           // default
+            xl('Maximum idle time in seconds before logout. Default is 1800 (30 minutes).')
+        ),
         'secure_upload' => array(
             xl('Secure Upload Files with White List'),
             'bool',                           // data type
@@ -4024,6 +4030,19 @@ $GLOBALS_METADATA = array(
         ),
 
     ),
+
+    'Patient Banner Bar' => [
+        'patient_name_display' => [
+            xl('Patient Name Display'),
+            [
+                'btn' => xl('As Button'),
+                'text' => xl('As Text Link'),
+                'text-large' => xl('As Large Text Link'),
+            ],
+            'text-large',
+            xl('How to display the patient name'),
+        ],
+    ],
 );
 
 if (!empty($GLOBALS['ippf_specific'])) {
@@ -4089,7 +4108,7 @@ if (!empty($GLOBALS['ippf_specific'])) {
             xl('Visits by Item Report'),
             'bool',                           // data type
             '0',                              // default
-            xl('Visits by Item Report.')
+            xl('Visits by Item Report')
         ),
 
         'gbl_menu_acct_trans' => array(
@@ -4138,7 +4157,7 @@ if (!empty($GLOBALS['ippf_specific'])) {
             xl('Service and Client Volume Report'),
             'bool', // data type
             '1', // default
-            xl('Service and client volume report')
+            xl('Service and Client Volume Report')
         ),
     );
 
