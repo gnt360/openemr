@@ -17,6 +17,7 @@ require_once(__DIR__ . "/../../globals.php");
 require_once("$srcdir/FeeSheetHtml.class.php");
 require_once("codes.php");
 require_once("$srcdir/options.inc.php");
+require_once("codes.class.php");
 
 use OpenEMR\Billing\BillingUtilities;
 use OpenEMR\Common\Acl\AclMain;
@@ -30,6 +31,14 @@ if (!AclMain::aclCheckForm('fee_sheet')) {
     <script>alert(<?php echo xlj("Not authorized"); ?>)</script>;
     <?php
     formJump();
+}
+
+function get_price_by_code(int $code_id): float
+{
+    $row = sqlQuery("SELECT pr_price FROM prices WHERE " .
+    "pr_id = ? LIMIT 1", array($code_id));
+
+    return $row['pr_price'];
 }
 
 // Some table cells will not be displayed unless insurance billing is used.
@@ -701,6 +710,18 @@ function codeselect(selobj) {
  }
 }
 
+function btncodeselect() {
+    var code_text = document.getElementById('search_term').value;
+
+    if (code_text !== '') {
+        top.restoreSession();
+        var f = document.forms[0];
+        f.newcodes.value = code_text;
+
+        f.submit();
+    }
+}
+
 function copayselect() {
  top.restoreSession();
  var f = document.forms[0];
@@ -721,6 +742,7 @@ function voidwrap(form_reason, form_notes) {
 }
 
 function validate(f) {
+
  if (f.bn_reopen) {
   var reopening = f.bn_reopen.clicked;
   var voiding = reopening && f.bn_reopen.clicked == 2;
@@ -753,7 +775,9 @@ function validate(f) {
  }
  var searching = false;
  if (f.bn_search) {
+
   searching = f.bn_search.clicked ? true : false;
+
   f.bn_search.clicked  = false;
  }
  if (!refreshing && !searching) {
@@ -767,6 +791,7 @@ function validate(f) {
 // this procedure and then rebuild its selection list.
 //
 function setJustify(seljust) {
+
  var theopts = seljust.options;
  var jdisplay = theopts[0].text;
  // Compute revised justification string.  Note this does nothing if
@@ -786,6 +811,8 @@ function setJustify(seljust) {
  var j = 0;
  theopts.length = 0;
  theopts[j++] = new Option(jdisplay,jdisplay,true,true);
+
+ console.log('test: ' + theopts[j++]);
  for (var i = 0; i < diags.length; ++i) {
   if (jhaystack.indexOf(',' + diags[i] + ',') < 0) {
    theopts[j++] = new Option(diags[i],diags[i],false,false);
@@ -968,110 +995,110 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                             </div>
                         </fieldset>
 
-                    <fieldset>
-                    <legend><?php echo xlt("Select Code")?></legend>
-                    <div class='text-center'>
-                        <table class="table" width="95%">
-                            <?php
-                                $i = 0;
-                                $last_category = '';
-
-                                // Create drop-lists based on the fee_sheet_options table.
-                                $res = sqlStatement("SELECT * FROM fee_sheet_options " .
-                                "ORDER BY fs_category, fs_option");
-                            while ($row = sqlFetchArray($res)) {
-                                $fs_category = $row['fs_category'];
-                                $fs_option   = $row['fs_option'];
-                                $fs_codes    = $row['fs_codes'];
-                                if ($fs_category !== $last_category) {
-                                    endFSCategory();
-                                    $last_category = $fs_category;
-                                    ++$i;
-                                    // can cleave either one or two spaces from fs_category, fs_option to accomodate more than 9 custom categories
-                                    $cleave_cat = is_numeric(substr($fs_category, 0, 2)) ? 2 : 1;
-                                    $cleave_opt = is_numeric(substr($fs_option, 0, 2)) ? 2 : 1;
-                                    echo ($i <= 1) ? " <tr>\n" : "";
-                                    echo "  <td class='text-nowrap' width='50%'>\n";
-                                    echo "   <select class='form-control' onchange='codeselect(this)'>\n";
-                                    echo "    <option value=''> " . xlt(substr($fs_category, $cleave_cat)) . "</option>\n";
-                                }
-                                echo "    <option value='" . attr($fs_codes) . "'>" . xlt(substr($fs_option, $cleave_opt)) . "</option>\n";
-                            }
-                                endFSCategory();
-
-                                // Create drop-lists based on categories defined within the codes.
-                                $pres = sqlStatement("SELECT option_id, title FROM list_options " .
-                                "WHERE list_id = 'superbill' AND activity = 1 ORDER BY seq");
-                            while ($prow = sqlFetchArray($pres)) {
-                                global $code_types;
-                                ++$i;
-                                echo ($i <= 1) ? " <tr>\n" : "";
-                                echo "  <td class='text-center text-nowrap' width='50%'>\n";
-                                echo "   <select class='form-control' onchange='codeselect(this)'>\n";
-                                echo "    <option value=''> " . text(xl_list_label($prow['title'])) . "\n";
-                                $res = sqlStatement("SELECT code_type, code, code_text,modifier FROM codes " .
-                                "WHERE superbill = ? AND active = 1 " .
-                                "ORDER BY code_text", array($prow['option_id']));
-                                while ($row = sqlFetchArray($res)) {
-                                    $ctkey = $fs->alphaCodeType($row['code_type']);
-                                    if ($code_types[$ctkey]['nofs']) {
-                                        continue;
-                                    }
-                                    echo "    <option value='" . attr($ctkey) . "|" .
-                                    attr($row['code']) . ':' . attr($row['modifier']) . "|'>" . text($row['code_text']) . "</option>\n";
-                                }
-                                echo "   </select>\n";
-                                echo "  </td>\n";
-                                if ($i >= $FEE_SHEET_COLUMNS) {
-                                    echo " </tr>\n";
-                                    $i = 0;
-                                }
-                            }
-
-                                // Create one more drop-list, for Products.
-                            if ($GLOBALS['sell_non_drug_products']) {
-                                ++$i;
-                                echo ($i <= 1) ? " <tr>\n" : "";
-                                echo "  <td class='text-center text-nowrap' width='50%'>\n";
-                                echo "   <select name='Products' class='form-control' onchange='codeselect(this)'>\n";
-                                echo "    <option value=''> " . xlt('Products') . "\n";
-                                $tres = sqlStatement("SELECT dt.drug_id, dt.selector, d.name " .
-                                "FROM drug_templates AS dt, drugs AS d WHERE " .
-                                "d.drug_id = dt.drug_id AND d.active = 1 AND d.consumable = 0 " .
-                                "ORDER BY d.name, dt.selector, dt.drug_id");
-                                while ($trow = sqlFetchArray($tres)) {
-                                    // Skip products that we don't have any of or that the user may not access.
-                                    if (!isProductSelectable($trow['drug_id'])) {
-                                        continue;
-                                    }
-                                    echo "    <option value='PROD|" . attr($trow['drug_id']) . '|' . attr($trow['selector']) . "'>";
-                                    echo text($trow['name']);
-                                    if ($trow['name'] !== $trow['selector']) {
-                                        echo ' / ' . text($trow['selector']);
-                                    }
-                                    echo "</option>\n";
-                                }
-                                echo "   </select>\n";
-                                echo "  </td>\n";
-                                if ($i >= $FEE_SHEET_COLUMNS) {
-                                    echo " </tr>\n";
-                                    $i = 0;
-                                }
-                            }
-
-                            $search_type = $GLOBALS['default_search_code_type'] ?? null;
-                            if (!empty($_POST['search_type'])) {
-                                $search_type = $_POST['search_type'];
-                            }
-
-                                $ndc_applies = true; // Assume all payers require NDC info.
-
-                                echo $i ? "  <td></td>\n </tr>\n" : "";
-                            ?>
-
-                                </table>
-                            </div>
-                        </fieldset>
+<!--                    <fieldset>-->
+<!--                    <legend>--><?php //echo xlt("Select Code")?><!--</legend>-->
+<!--                    <div class='text-center'>-->
+<!--                        <table class="table" width="95%">-->
+<!--                            --><?php
+//                                $i = 0;
+//                                $last_category = '';
+//
+//                                // Create drop-lists based on the fee_sheet_options table.
+////                                $res = sqlStatement("SELECT * FROM fee_sheet_options " .
+////                                "ORDER BY fs_category, fs_option");
+////                            while ($row = sqlFetchArray($res)) {
+////                                $fs_category = $row['fs_category'];
+////                                $fs_option   = $row['fs_option'];
+////                                $fs_codes    = $row['fs_codes'];
+////                                if ($fs_category !== $last_category) {
+////                                    endFSCategory();
+////                                    $last_category = $fs_category;
+////                                    ++$i;
+////                                    // can cleave either one or two spaces from fs_category, fs_option to accomodate more than 9 custom categories
+////                                    $cleave_cat = is_numeric(substr($fs_category, 0, 2)) ? 2 : 1;
+////                                    $cleave_opt = is_numeric(substr($fs_option, 0, 2)) ? 2 : 1;
+////                                    echo ($i <= 1) ? " <tr>\n" : "";
+////                                    echo "  <td class='text-nowrap' width='50%'>\n";
+////                                    echo "   <select class='form-control' onchange='codeselect(this)'>\n";
+////                                    echo "    <option value=''> " . xlt(substr($fs_category, $cleave_cat)) . "</option>\n";
+////                                }
+////                                echo "    <option value='" . attr($fs_codes) . "'>" . xlt(substr($fs_option, $cleave_opt)) . "</option>\n";
+////                            }
+////                                endFSCategory();
+//
+//                                // Create drop-lists based on categories defined within the codes.
+////                                $pres = sqlStatement("SELECT option_id, title FROM list_options " .
+////                                "WHERE list_id = 'superbill' AND activity = 1 ORDER BY seq");
+////                            while ($prow = sqlFetchArray($pres)) {
+////                                global $code_types;
+////                                ++$i;
+////                                echo ($i <= 1) ? " <tr>\n" : "";
+////                                echo "  <td class='text-center text-nowrap' width='50%'>\n";
+////                                echo "   <select class='form-control' onchange='codeselect(this)'>\n";
+////                                echo "    <option value=''> " . text(xl_list_label($prow['title'])) . "\n";
+////                                $res = sqlStatement("SELECT code_type, code, code_text,modifier FROM codes " .
+////                                "WHERE superbill = ? AND active = 1 " .
+////                                "ORDER BY code_text", array($prow['option_id']));
+////                                while ($row = sqlFetchArray($res)) {
+////                                    $ctkey = $fs->alphaCodeType($row['code_type']);
+////                                    if ($code_types[$ctkey]['nofs']) {
+////                                        continue;
+////                                    }
+////                                    echo "    <option value='" . attr($ctkey) . "|" .
+////                                    attr($row['code']) . ':' . attr($row['modifier']) . "|'>" . text($row['code_text']) . "</option>\n";
+////                                }
+////                                echo "   </select>\n";
+////                                echo "  </td>\n";
+////                                if ($i >= $FEE_SHEET_COLUMNS) {
+////                                    echo " </tr>\n";
+////                                    $i = 0;
+////                                }
+////                            }
+//
+//                                // Create one more drop-list, for Products.
+////                            if ($GLOBALS['sell_non_drug_products']) {
+////                                ++$i;
+////                                echo ($i <= 1) ? " <tr>\n" : "";
+////                                echo "  <td class='text-center text-nowrap' width='50%'>\n";
+////                                echo "   <select name='Products' class='form-control' onchange='codeselect(this)'>\n";
+////                                echo "    <option value=''> " . xlt('Products') . "\n";
+////                                $tres = sqlStatement("SELECT dt.drug_id, dt.selector, d.name " .
+////                                "FROM drug_templates AS dt, drugs AS d WHERE " .
+////                                "d.drug_id = dt.drug_id AND d.active = 1 AND d.consumable = 0 " .
+////                                "ORDER BY d.name, dt.selector, dt.drug_id");
+////                                while ($trow = sqlFetchArray($tres)) {
+////                                    // Skip products that we don't have any of or that the user may not access.
+////                                    if (!isProductSelectable($trow['drug_id'])) {
+////                                        continue;
+////                                    }
+////                                    echo "    <option value='PROD|" . attr($trow['drug_id']) . '|' . attr($trow['selector']) . "'>";
+////                                    echo text($trow['name']);
+////                                    if ($trow['name'] !== $trow['selector']) {
+////                                        echo ' / ' . text($trow['selector']);
+////                                    }
+////                                    echo "</option>\n";
+////                                }
+////                                echo "   </select>\n";
+////                                echo "  </td>\n";
+////                                if ($i >= $FEE_SHEET_COLUMNS) {
+////                                    echo " </tr>\n";
+////                                    $i = 0;
+////                                }
+////                            }
+//
+//                            $search_type = $GLOBALS['default_search_code_type'] ?? null;
+//                            if (!empty($_POST['search_type'])) {
+//                                $search_type = $_POST['search_type'];
+//                            }
+//
+//                                $ndc_applies = true; // Assume all payers require NDC info.
+//
+//                                echo $i ? "  <td></td>\n </tr>\n" : "";
+//                            ?>
+<!---->
+<!--                                </table>-->
+<!--                            </div>-->
+<!--                    </fieldset>-->
 
                         <fieldset>
                             <legend><?php echo xlt("Search for Additional Codes")?></legend>
@@ -1103,52 +1130,56 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                 </div>
 
                                 <div class="mx-5 mb-3 text-center">
-                                    <div class="input-group">
-                                        <input type='text' class="form-control" name='search_term' value='' />
-                                        <div class="input-group-append">
-                                            <input type='submit' class='btn btn-primary' name='bn_search' value='<?php echo xla('Search');?>' onclick='return this.clicked = true;' />
+                                    <div class="form-group md-10">
+                                        <div class="dropdown">
+                                            <input type='text' class="form-control" name='search_term' id="search_term" placeholder="start type..."  autocomplete="off"  onkeyup="javascript:load_data(this.value)" value='' />
+                                            <span id="search_result"></span>
+                                        </div>
+                                        <div class="form-group md-2 mt-1">
+                                            <!-- <input type='submit' class='btn btn-primary' name='bn_search' value='<?php //echo xla('Search');?>' onclick='return this.clicked = true;' /> -->
+                                            <input type='submit' class='btn btn-primary' value='<?php echo xla('Search');?>' onclick='return btncodeselect();' />
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="mx-5 mb-3 text-center">
+                                <!-- <div class="mx-5 mb-3 text-center">
                                     <?php
-                                    echo "<td colspan='" . attr($FEE_SHEET_COLUMNS) . "' class='text-center text-nowrap'>\n";
+                                   // echo "<td colspan='" . attr($FEE_SHEET_COLUMNS) . "' class='text-center text-nowrap'>\n";
 
                                     // If Search was clicked, do it and write the list of results here.
                                     // There's no limit on the number of results!
                                     //
-                                    $numrows = 0;
-                                    if (!empty($_POST['bn_search']) && !empty($_POST['search_term'])) {
-                                        $res = main_code_set_search($search_type, $_POST['search_term']);
-                                        if (!empty($res)) {
-                                            $numrows = sqlNumRows($res);
-                                        }
-                                    }
-                                    if (! $numrows) {
-                                        echo "   <select name='search_results' class='form-control text-danger' " .
-                                        "onchange='codeselect(this)' disabled >\n";
-                                    } else {
-                                        echo "   <select name='search_results' style='background: var(--yellow)' " .
-                                        "onchange='codeselect(this)' >\n";
-                                    }
+                                    // $numrows = 0;
+                                    // if (!empty($_POST['bn_search']) && !empty($_POST['search_term'])) {
+                                    //     $res = main_code_set_search($search_type, $_POST['search_term']);
+                                    //     if (!empty($res)) {
+                                    //         $numrows = sqlNumRows($res);
+                                    //     }
+                                    // }
+                                    // if (! $numrows) {
+                                    //     echo "   <select name='search_results' class='form-control text-danger' " .
+                                    //     "onchange='codeselect(this)' disabled >\n";
+                                    // } else {
+                                    //     echo "   <select name='search_results' style='background: var(--yellow)' " .
+                                    //     "onchange='codeselect(this)' >\n";
+                                    // }
 
-                                    echo "    <option value=''> " . xlt("Search Results") . " ($numrows " . xlt("items") . ")\n";
+                                    // echo "    <option value=''> " . xlt("Search Results") . " ($numrows " . xlt("items") . ")\n";
 
-                                    if ($numrows) {
-                                        while ($row = sqlFetchArray($res)) {
-                                            $code = $row['code'];
-                                            if ($row['modifier']) {
-                                                $code .= ":" . $row['modifier'];
-                                            }
-                                            echo "    <option value='" . attr($search_type) . "|" . attr($code) . "|'>" . text($code) . " " .
-                                            text($row['code_text']) . "</option>\n";
-                                        }
-                                    }
+                                    // if ($numrows) {
+                                    //     while ($row = sqlFetchArray($res)) {
+                                    //         $code = $row['code'];
+                                    //         if ($row['modifier']) {
+                                    //             $code .= ":" . $row['modifier'];
+                                    //         }
+                                    //         echo "    <option value='" . attr($search_type) . "|" . attr($code) . "|'>" . text($code) . " " .
+                                    //         text($row['code_text']) . "</option>\n";
+                                    //     }
+                                    // }
 
-                                    echo "   </select>\n";
-                                    ?>
-                                </div>
+                                    // echo "   </select>\n";
+                                    // ?>
+                                </div> -->
                         </fieldset>
 
                     <?php } // end encounter not billed ?>
@@ -1337,7 +1368,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
 
                                         // Price display is conditional.
                                         if ($iter['price'] != 'X') {
-                                            $fee = formatMoneyNumber((0 + trim($iter['price'] ?? null)) * $units);
+                                            $fee = formatMoneyNumber((0 + trim($iter['price'] ?? 0)) * $units);
                                         } else {
                                             $fee = $fs->getPrice($iter['pricelevel'], $iter['code_type'], $iter['code']);
                                             $fee = formatMoneyNumber((0 + $fee) * $units);
@@ -1493,14 +1524,17 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                     }
 
                                     if (!$alertmsg) {
+
                                         foreach ($arrcodes as $codestring) {
                                             if ($codestring === '') {
                                                 continue;
                                             }
+
                                             $arrcode = explode('|', $codestring);
                                             $newtype = $arrcode[0];
                                             $newcode = $arrcode[1];
                                             $newsel  = $arrcode[2];
+
                                             if ($newtype == 'COPAY') {
                                                 $tmp = sqlQuery("SELECT copay FROM insurance_data WHERE pid = ? " .
                                                 "AND type = 'primary' ORDER BY date DESC LIMIT 1", array($fs->pid));
@@ -1532,11 +1566,20 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                                     false
                                                 );
                                             } else {
+
                                                 if (strpos($newcode, ':') !== false) {
                                                     list($code, $modifier) = explode(":", $newcode);
                                                 } else {
-                                                    $code = $newcode;
+                                                    // Paul modified this if block to display codes after searching with Autocomplete
+                                                    $cquery = sqlQuery("SELECT code, code_type, id FROM codes WHERE " .
+                                                    "code_text = ? LIMIT 1", array($arrcode[0]));
+                                                    $newtype = get_code_type_name($cquery['code_type']);
+                                                    $price = get_price_by_code((int)$cquery['id']);
+                                                    //$code = $newcode;
+                                                    $code = $cquery['code'];
                                                     $modifier = '';
+
+
                                                 }
                                                 $ndc_info = '';
                                                 // If HCPCS, find last NDC string used for this code.
@@ -1554,12 +1597,19 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                                         }
                                                     }
                                                 }
+
                                                 $fs->addServiceLineItem(array(
                                                      'codetype' => $newtype,
                                                      'code' => $code,
-                                                     'modifier' => trim($modifier),
-                                                     'ndc_info' => $ndc_info,
+                                                     'code_text' => $arrcode[0],
+                                                     //'ndc_info'    => date('Y-m-d'),
+                                                    'auth'        => '1',
+                                                    'units'       => '1',
+                                                    'fee'         => formatMoneyNumber($price),
+                                                    'price'       => $price
                                                 ));
+
+                                                var_dump($fs->serviceitems);
                                             }
                                         }
                                     }
@@ -1730,6 +1780,147 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
     <?php if (!empty($_POST['bn_search'])) { ?>
         document.querySelector("[name='search_term']") . scrollIntoView();
     <?php } ?>
+
+
+    function load_search_history()
+    {
+        var search_query = document.getElementsByName('search_box')[0].value;
+
+        if(search_query == '')
+        {
+
+            fetch("process_autocomplete_data.php", {
+
+                method: "POST",
+
+                body: JSON.stringify({
+                    action:'fetch'
+                }),
+
+                headers:{
+                    'Content-type' : 'application/json; charset=UTF-8'
+                }
+
+            }).then(function(response){
+
+                return response.json();
+
+            }).then(function(responseData){
+
+                if(responseData.length > 0)
+                {
+
+                    var html = '<ul class="list-group">';
+
+                    html += '<li class="list-group-item d-flex justify-content-between align-items-center"><b class="text-primary"><i>Your Recent Searches</i></b></li>';
+
+                    for(var count = 0; count < responseData.length; count++)
+                    {
+
+                        html += '<li class="list-group-item text-muted" style="cursor:pointer"><i class="fas fa-history mr-3"></i><span onclick="get_text(this)">'+responseData[count].search_query+'</span> <i class="far fa-trash-alt float-right mt-1" onclick="delete_search_history('+responseData[count].id+')"></i></li>';
+
+                    }
+
+                    html += '</ul>';
+
+                    document.getElementById('search_result').innerHTML = html;
+
+                }
+
+            });
+
+        }
+    }
+
+
+    function get_text(event)
+    {
+        var string = event.textContent;
+
+        //console.log(string);
+        //fetch api
+
+        fetch("process_autocomplete_data.php", {
+
+            method:"POST",
+
+            body: JSON.stringify({
+                search_query : string
+            }),
+
+            headers : {
+                "Content-type" : "application/json; charset=UTF-8"
+            }
+        }).then(function(response){
+
+            return response.json();
+
+        }).then(function(responseData){
+
+            document.getElementsByName('search_term')[0].value = string;
+
+            document.getElementById('search_result').innerHTML = '';
+
+        });
+
+    }
+
+    function load_data(query)
+    {
+        if(query.length > 2)
+        {
+            var form_data = new FormData();
+
+            form_data.append('query', query);
+
+            var ajax_request = new XMLHttpRequest();
+
+            ajax_request.open('POST', 'process_autocomplete_data.php');
+
+            ajax_request.send(form_data);
+
+            ajax_request.onreadystatechange = function()
+            {
+                if(ajax_request.readyState == 4 && ajax_request.status == 200)
+                {
+                    var response = JSON.parse(ajax_request.responseText);
+
+                    var html = '<div class="list-group">';
+
+                    if(response.length > 0)
+                    {
+                        for(var count = 0; count < response.length; count++)
+                        {
+                            html += '<a href="#" class="list-group-item list-group-item-action" onclick="get_text(this)">'+response[count].code_text+'</a>';
+                        }
+                    }
+                    else
+                    {
+                        html += '<a href="#" class="list-group-item list-group-item-action disabled">No Data Found</a>';
+                    }
+
+                    html += '</div>';
+
+                    document.getElementById('search_result').innerHTML = html;
+                }
+            }
+        }
+        else
+        {
+            document.getElementById('search_result').innerHTML = '';
+        }
+    }
+
+
+    var ignore_element = document.getElementById('search_term');
+
+    document.addEventListener('click', function(event) {
+        var check_click = ignore_element.contains(event.target);
+        if (!check_click)
+        {
+            document.getElementById('search_result').innerHTML = '';
+        }
+    });
 </script>
 </body>
 </html>

@@ -154,6 +154,7 @@ if (empty($_SESSION['site_id']) || !empty($_GET['site'])) {
             if ((isset($_GET['auth'])) && ($_GET['auth'] == "logout")) {
                 $GLOBALS['login_screen'] = "login_screen.php";
                 $srcdir = "../library";
+                //$interfacedir = "../interface";
                 require_once("$srcdir/auth.inc");
             }
             die("Site ID is missing from session data!");
