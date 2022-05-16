@@ -26,7 +26,7 @@ if ($response !== true) {
 
 // Set the maximum excution time and time limit to unlimited.
 ini_set('max_execution_time', 0);
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 set_time_limit(0);
 
 // Warning. If you set $allow_multisite_setup to true, this is a potential security vulnerability.

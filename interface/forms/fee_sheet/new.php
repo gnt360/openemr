@@ -17,7 +17,6 @@ require_once(__DIR__ . "/../../globals.php");
 require_once("$srcdir/FeeSheetHtml.class.php");
 require_once("codes.php");
 require_once("$srcdir/options.inc.php");
-require_once("codes.class.php");
 
 use OpenEMR\Billing\BillingUtilities;
 use OpenEMR\Common\Acl\AclMain;
@@ -31,14 +30,6 @@ if (!AclMain::aclCheckForm('fee_sheet')) {
     <script>alert(<?php echo xlj("Not authorized"); ?>)</script>;
     <?php
     formJump();
-}
-
-function get_price_by_code(int $code_id): float
-{
-    $row = sqlQuery("SELECT pr_price FROM prices WHERE " .
-    "pr_id = ? LIMIT 1", array($code_id));
-
-    return $row['pr_price'];
 }
 
 // Some table cells will not be displayed unless insurance billing is used.
@@ -100,6 +91,7 @@ function echoServiceLines()
     global $code_types, $justinit, $usbillstyle, $liprovstyle, $justifystyle, $fs, $price_levels_are_used, $institutional;
 
     foreach ($fs->serviceitems as $lino => $li) {
+
         $id       = $li['hidden']['id'];
         $codetype = $li['hidden']['code_type'];
         $code     = $li['hidden']['code'];
@@ -154,10 +146,10 @@ function echoServiceLines()
         echo "  <td class='billcell'>$strike1" . text($li['code_text']) . "$strike2</td>\n";
 
         if ($billed) {
-            if ($institutional) {
-                echo "  <td class='billcell'>$strike1" . text($revenue_code) . "$strike2" .
-                "<input type='hidden' name='bill[" . attr($lino) . "][revenue_code]' value='" . attr($revenue_code) . "'></td>\n";
-            }
+            // if ($institutional) {
+            //     echo "  <td class='billcell'>$strike1" . text($revenue_code) . "$strike2" .
+            //     "<input type='hidden' name='bill[" . attr($lino) . "][revenue_code]' value='" . attr($revenue_code) . "'></td>\n";
+            // }
 
             if (modifiers_are_used(true)) {
                 echo "  <td class='billcell'>$strike1" . text($modifier) . "$strike2" .
@@ -198,32 +190,38 @@ function echoServiceLines()
             );
             echo "</td>\n";
 
-            if ($code_types[$codetype]['claim'] && !$code_types[$codetype]['diag']) {
-                echo "  <td class='billcell text-center' $usbillstyle>" .
-                text($li['notecodes']) . "</td>\n";
-            } else {
-                echo "  <td class='billcell text-center' $usbillstyle></td>\n";
-            }
+            /**
+             * Commented notecodes out to replace it with is primary
+             */
+            // if (($code_types[$codetype]['claim'] ?? null) && !($code_types[$codetype]['diag'] ?? null)) {
+            //     echo "  <td class='billcell text-center' $usbillstyle>" .
+            //     text($li['notecodes']) . "</td>\n";
+            // } else {
+            //     echo "  <td class='billcell text-center' $usbillstyle></td>\n";
+            // }
+
+            echo "  <td class='billcell text-center' $usbillstyle><input type='checkbox'" .
+            ($li['is_primary'] ? " checked" : "") . " disabled /></td>\n";
 
             echo "  <td class='billcell text-center' $usbillstyle><input type='checkbox'" .
             ($li['auth'] ? " checked" : "") . " disabled /></td>\n";
 
-            if (!empty(isset($GLOBALS['gbl_auto_create_rx']))) {
+            if (!empty($GLOBALS['gbl_auto_create_rx'])) {
                 echo "  <td class='billcell text-center'>&nbsp;</td>\n";
             }
 
             echo "  <td class='billcell text-center'><input type='checkbox'" .
             " disabled /></td>\n";
         } else { // not billed
-            if ($institutional) {
-                if ($codetype != 'COPAY' && $codetype != 'ICD10') {
-                    echo "  <td class='billcell'><select type='text' class='revcode form-control' name='bill[" . attr($lino) . "][revenue_code]' " .
-                        "title='" . xla("Revenue Code for this item. Type to search") . "' " .
-                        "value='" . attr($revenue_code) . "' size='4'></select></td>\n";
-                } else {
-                    echo "  <td class='billcell'>&nbsp;</td>\n";
-                }
-            }
+            // if ($institutional) {
+            //     if ($codetype != 'COPAY' && $codetype != 'ICD10') {
+            //         echo "  <td class='billcell'><select type='text' class='revcode form-control' name='bill[" . attr($lino) . "][revenue_code]' " .
+            //             "title='" . xla("Revenue Code for this item. Type to search") . "' " .
+            //             "value='" . attr($revenue_code) . "' size='4'></select></td>\n";
+            //     } else {
+            //         echo "  <td class='billcell'>&nbsp;</td>\n";
+            //     }
+            // }
             if (modifiers_are_used(true)) {
                 if ($codetype != 'COPAY' && (!empty($code_types[$codetype]['mod']) || $modifier)) {
                     echo "  <td class='billcell'><input type='text' class='form-control' name='bill[" . attr($lino) . "][mod]' " .
@@ -292,17 +290,24 @@ function echoServiceLines()
             echo $fs->genProviderSelect("bill[$lino][provid]", '-- ' . xl("Default") . ' --', $li['provid']);
             echo "</td>\n";
 
-            if (!empty($code_types[$codetype]['claim']) && empty($code_types[$codetype]['diag'])) {
-                echo "  <td class='billcell text-center' $usbillstyle><input type='text' class='form-control' name='bill[" . attr($lino) . "][notecodes]' " .
-                "value='" . text($li['notecodes']) . "' maxlength='10' size='8' /></td>\n";
-            } else {
-                echo "  <td class='billcell text-center' $usbillstyle></td>\n";
-            }
+            // if (!empty($code_types[$codetype]['claim']) && empty($code_types[$codetype]['diag'])) {
+            //     echo "  <td class='billcell text-center' $usbillstyle><input type='text' class='form-control' name='bill[" . attr($lino) . "][notecodes]' " .
+            //     "value='" . text($li['notecodes']) . "' maxlength='10' size='8' /></td>\n";
+            // } else {
+            //     echo "  <td class='billcell text-center' $usbillstyle></td>\n";
+            // }
+
+            // echo "  <td class='billcell text-center' $usbillstyle><input type='checkbox'" .
+            // ($li['is_primary'] ? " checked" : "") . " disabled /></td>\n";
+
+            echo "  <td class='billcell text-center' $usbillstyle><input type='checkbox' name='bill[" . attr($lino) . "][is_primary]' " .
+            "value='1'" . ($li['is_primary'] ? " checked" : "") . " /></td>\n";
+
 
             echo "  <td class='billcell text-center' $usbillstyle><input type='checkbox' name='bill[" . attr($lino) . "][auth]' " .
             "value='1'" . ($li['auth'] ? " checked" : "") . " /></td>\n";
 
-            if (!empty(isset($GLOBALS['gbl_auto_create_rx']))) {
+            if (!empty($GLOBALS['gbl_auto_create_rx'])) {
                 echo "  <td class='billcell text-center'>&nbsp;</td>\n";   // KHY: May need to confirm proper location of this cell
             }
 
@@ -351,12 +356,13 @@ function echoProductLines()
     global $code_types, $usbillstyle, $liprovstyle, $justifystyle, $fs, $price_levels_are_used;
 
     foreach ($fs->productitems as $lino => $li) {
+
         $drug_id      = $li['hidden']['drug_id'];
         $selector     = $li['hidden']['selector'];
         $sale_id      = $li['hidden']['sale_id'];
         $billed       = $li['hidden']['billed'];
         $fee          = $li['fee'];
-        $price        = $li['price'];
+        $price        = (float)$li['fee'];
         $pricelevel   = $li['pricelevel'];
         $units        = $li['units'];
         $del          = $li['del'];
@@ -384,10 +390,11 @@ function echoProductLines()
 
         echo "</td>\n";
 
+
         echo "  <td class='billcell'>$strike1" . text($drug_id) . "$strike2</td>\n";
 
         echo "  <td class='billcell'>$strike1" . text($description) . "$strike2</td>\n";
-
+        //echo "  <td class='billcell'></td>\n"; //revenue
         if (modifiers_are_used(true)) {
             echo "  <td class='billcell'>&nbsp;</td>\n";
         }
@@ -421,7 +428,7 @@ function echoProductLines()
             //
             echo "  <td class='billcell text-center' $usbillstyle>&nbsp;</td>\n"; // note codes
             echo "  <td class='billcell text-center' $usbillstyle>&nbsp;</td>\n"; // auth
-            if (isset($GLOBALS['gbl_auto_create_rx'])) {
+            if ($GLOBALS['gbl_auto_create_rx']) {
                 echo "  <td class='billcell text-center'><input type='checkbox'" . // rx
                 " disabled /></td>\n";
             }
@@ -468,7 +475,7 @@ function echoProductLines()
             //
             echo "  <td class='billcell text-center' $usbillstyle>&nbsp;</td>\n"; // note codes
             echo "  <td class='billcell text-center' $usbillstyle>&nbsp;</td>\n"; // auth
-            if (isset($GLOBALS['gbl_auto_create_rx'])) {
+            if ($GLOBALS['gbl_auto_create_rx']) {
                 echo "  <td class='billcell text-center'>" .
                 "<input type='checkbox' name='prod[" . attr($lino) . "][rx]' value='1'" .
                 ($rx ? " checked" : "") . " /></td>\n";
@@ -501,14 +508,14 @@ $current_checksum = $fs->visitChecksum();
 if (!empty($_POST['running_as_ajax']) && !empty($_POST['dx_update'])) {
     $main_provid = 0 + $_POST['ProviderID'];
     $main_supid = 0 + (int)$_POST['SupervisorID'];
-    $fs->save(
-        $_POST['bill'],
-        $_POST['prod'],
-        $main_provid,
-        $main_supid,
-        $_POST['default_warehouse'] ?? null,
-        $_POST['bn_save_close'] ?? null
-    );
+    // $fs->save(
+    //     $_POST['bill'],
+    //     $_POST['prod'],
+    //     $main_provid,
+    //     $main_supid,
+    //     $_POST['default_warehouse'] ?? null,
+    //     $_POST['bn_save_close'] ?? null
+    // );
 
     unset($_POST['dx_update']);
     unset($_POST['bill']);
@@ -606,16 +613,24 @@ if (!$alertmsg && (!empty($_POST['bn_save']) || !empty($_POST['bn_save_close']) 
 } // end save or save-and-close
 
 // Handle reopen request.  In that case no other changes will be saved.
-// If there was a checkout this will undo it.
+// If there was a checkout this will undo it unless the global 'void_checkout_reopen' is turned off
+// then it just reopens the fee sheet for editing
 if (!$alertmsg && (!empty($_POST['bn_reopen']) || !empty($_POST['form_reopen']))) {
-    BillingUtilities::doVoid(
-        $fs->pid,
-        $fs->encounter,
-        true,
-        'all',
-        $_POST['form_reason'],
-        $_POST['form_notes']
-    );
+    if ($GLOBALS['void_checkout_reopen']) {
+        BillingUtilities::doVoid(
+            $fs->pid,
+            $fs->encounter,
+            true,
+            'all',
+            $_POST['form_reason'],
+            $_POST['form_notes']
+        );
+    } else {
+        BillingUtilities::reOpenEncounterForBilling(
+            $fs->pid,
+            $fs->encounter
+        );
+    }
     $current_checksum = $fs->visitChecksum();
     // Remove the line items so they are refreshed from the database on redisplay.
     unset($_POST['bill']);
@@ -623,6 +638,8 @@ if (!$alertmsg && (!empty($_POST['bn_reopen']) || !empty($_POST['form_reopen']))
 }
 
 $billresult = BillingUtilities::getBillingByEncounter($fs->pid, $fs->encounter, "*");
+
+
 ?>
 <html>
 <head>
@@ -700,27 +717,15 @@ function reinitForm(){
 
 // This is invoked by <select onchange> for the various dropdowns,
 // including search results.
-function codeselect(selobj) {
- var i = selobj ? selobj.selectedIndex : -1;
- if (i) {
-  top.restoreSession();
-  var f = document.forms[0];
-  if (selobj) f.newcodes.value = selobj.options[i].value;
-  f.submit();
- }
-}
-
-function btncodeselect() {
-    var code_text = document.getElementById('search_term').value;
-
-    if (code_text !== '') {
-        top.restoreSession();
-        var f = document.forms[0];
-        f.newcodes.value = code_text;
-
-        f.submit();
-    }
-}
+// function codeselect(selobj) {
+//  var i = selobj ? selobj.selectedIndex : -1;
+//  if (i) {
+//   top.restoreSession();
+//   var f = document.forms[0];
+//   if (selobj) f.newcodes.value = selobj.options[i].value;
+//   f.submit();
+//  }
+// }
 
 function copayselect() {
  top.restoreSession();
@@ -742,10 +747,13 @@ function voidwrap(form_reason, form_notes) {
 }
 
 function validate(f) {
-
  if (f.bn_reopen) {
   var reopening = f.bn_reopen.clicked;
+  <?php if ($GLOBALS['void_checkout_reopen']) { ?>
   var voiding = reopening && f.bn_reopen.clicked == 2;
+  <?php } else { ?>
+  var voiding = false;
+  <?php } ?>
   f.bn_reopen.clicked = false;
   if (reopening) {
    if (voiding) {
@@ -754,6 +762,14 @@ function validate(f) {
     }
     // Collect void reason and notes.
     dlgopen('../../patient_file/void_dialog.php', '_blank', 500, 450);
+    return false;
+   } else {
+    if (!confirm(<?php echo xlj('Do you want to re-open this visit for billing?'); ?>)) {
+     return false;
+    }
+    var f = document.forms[0];
+    f.form_reopen.value = '1';
+    f.submit();
     return false;
    }
    top.restoreSession();
@@ -775,9 +791,7 @@ function validate(f) {
  }
  var searching = false;
  if (f.bn_search) {
-
   searching = f.bn_search.clicked ? true : false;
-
   f.bn_search.clicked  = false;
  }
  if (!refreshing && !searching) {
@@ -791,7 +805,6 @@ function validate(f) {
 // this procedure and then rebuild its selection list.
 //
 function setJustify(seljust) {
-
  var theopts = seljust.options;
  var jdisplay = theopts[0].text;
  // Compute revised justification string.  Note this does nothing if
@@ -811,8 +824,6 @@ function setJustify(seljust) {
  var j = 0;
  theopts.length = 0;
  theopts[j++] = new Option(jdisplay,jdisplay,true,true);
-
- console.log('test: ' + theopts[j++]);
  for (var i = 0; i < diags.length; ++i) {
   if (jhaystack.indexOf(',' + diags[i] + ',') < 0) {
    theopts[j++] = new Option(diags[i],diags[i],false,false);
@@ -995,113 +1006,113 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                             </div>
                         </fieldset>
 
-<!--                    <fieldset>-->
-<!--                    <legend>--><?php //echo xlt("Select Code")?><!--</legend>-->
-<!--                    <div class='text-center'>-->
-<!--                        <table class="table" width="95%">-->
-<!--                            --><?php
-//                                $i = 0;
-//                                $last_category = '';
-//
-//                                // Create drop-lists based on the fee_sheet_options table.
-////                                $res = sqlStatement("SELECT * FROM fee_sheet_options " .
-////                                "ORDER BY fs_category, fs_option");
-////                            while ($row = sqlFetchArray($res)) {
-////                                $fs_category = $row['fs_category'];
-////                                $fs_option   = $row['fs_option'];
-////                                $fs_codes    = $row['fs_codes'];
-////                                if ($fs_category !== $last_category) {
-////                                    endFSCategory();
-////                                    $last_category = $fs_category;
-////                                    ++$i;
-////                                    // can cleave either one or two spaces from fs_category, fs_option to accomodate more than 9 custom categories
-////                                    $cleave_cat = is_numeric(substr($fs_category, 0, 2)) ? 2 : 1;
-////                                    $cleave_opt = is_numeric(substr($fs_option, 0, 2)) ? 2 : 1;
-////                                    echo ($i <= 1) ? " <tr>\n" : "";
-////                                    echo "  <td class='text-nowrap' width='50%'>\n";
-////                                    echo "   <select class='form-control' onchange='codeselect(this)'>\n";
-////                                    echo "    <option value=''> " . xlt(substr($fs_category, $cleave_cat)) . "</option>\n";
-////                                }
-////                                echo "    <option value='" . attr($fs_codes) . "'>" . xlt(substr($fs_option, $cleave_opt)) . "</option>\n";
-////                            }
-////                                endFSCategory();
-//
-//                                // Create drop-lists based on categories defined within the codes.
-////                                $pres = sqlStatement("SELECT option_id, title FROM list_options " .
-////                                "WHERE list_id = 'superbill' AND activity = 1 ORDER BY seq");
-////                            while ($prow = sqlFetchArray($pres)) {
-////                                global $code_types;
-////                                ++$i;
-////                                echo ($i <= 1) ? " <tr>\n" : "";
-////                                echo "  <td class='text-center text-nowrap' width='50%'>\n";
-////                                echo "   <select class='form-control' onchange='codeselect(this)'>\n";
-////                                echo "    <option value=''> " . text(xl_list_label($prow['title'])) . "\n";
-////                                $res = sqlStatement("SELECT code_type, code, code_text,modifier FROM codes " .
-////                                "WHERE superbill = ? AND active = 1 " .
-////                                "ORDER BY code_text", array($prow['option_id']));
-////                                while ($row = sqlFetchArray($res)) {
-////                                    $ctkey = $fs->alphaCodeType($row['code_type']);
-////                                    if ($code_types[$ctkey]['nofs']) {
-////                                        continue;
-////                                    }
-////                                    echo "    <option value='" . attr($ctkey) . "|" .
-////                                    attr($row['code']) . ':' . attr($row['modifier']) . "|'>" . text($row['code_text']) . "</option>\n";
-////                                }
-////                                echo "   </select>\n";
-////                                echo "  </td>\n";
-////                                if ($i >= $FEE_SHEET_COLUMNS) {
-////                                    echo " </tr>\n";
-////                                    $i = 0;
-////                                }
-////                            }
-//
-//                                // Create one more drop-list, for Products.
-////                            if ($GLOBALS['sell_non_drug_products']) {
-////                                ++$i;
-////                                echo ($i <= 1) ? " <tr>\n" : "";
-////                                echo "  <td class='text-center text-nowrap' width='50%'>\n";
-////                                echo "   <select name='Products' class='form-control' onchange='codeselect(this)'>\n";
-////                                echo "    <option value=''> " . xlt('Products') . "\n";
-////                                $tres = sqlStatement("SELECT dt.drug_id, dt.selector, d.name " .
-////                                "FROM drug_templates AS dt, drugs AS d WHERE " .
-////                                "d.drug_id = dt.drug_id AND d.active = 1 AND d.consumable = 0 " .
-////                                "ORDER BY d.name, dt.selector, dt.drug_id");
-////                                while ($trow = sqlFetchArray($tres)) {
-////                                    // Skip products that we don't have any of or that the user may not access.
-////                                    if (!isProductSelectable($trow['drug_id'])) {
-////                                        continue;
-////                                    }
-////                                    echo "    <option value='PROD|" . attr($trow['drug_id']) . '|' . attr($trow['selector']) . "'>";
-////                                    echo text($trow['name']);
-////                                    if ($trow['name'] !== $trow['selector']) {
-////                                        echo ' / ' . text($trow['selector']);
-////                                    }
-////                                    echo "</option>\n";
-////                                }
-////                                echo "   </select>\n";
-////                                echo "  </td>\n";
-////                                if ($i >= $FEE_SHEET_COLUMNS) {
-////                                    echo " </tr>\n";
-////                                    $i = 0;
-////                                }
-////                            }
-//
-//                            $search_type = $GLOBALS['default_search_code_type'] ?? null;
-//                            if (!empty($_POST['search_type'])) {
-//                                $search_type = $_POST['search_type'];
-//                            }
-//
-//                                $ndc_applies = true; // Assume all payers require NDC info.
-//
-//                                echo $i ? "  <td></td>\n </tr>\n" : "";
-//                            ?>
-<!---->
-<!--                                </table>-->
-<!--                            </div>-->
-<!--                    </fieldset>-->
+                    <fieldset>
+                    <!-- <legend><?php //echo xlt("Select Code")?></legend> -->
+                    <div class='text-center'>
+                        <!-- <table class="table" width="95%">
+                            <?php
+                                $i = 0;
+                                $last_category = '';
+
+                                // Create drop-lists based on the fee_sheet_options table.
+                                $res = sqlStatement("SELECT * FROM fee_sheet_options " .
+                                "ORDER BY fs_category, fs_option");
+                            while ($row = sqlFetchArray($res)) {
+                                $fs_category = $row['fs_category'];
+                                $fs_option   = $row['fs_option'];
+                                $fs_codes    = $row['fs_codes'];
+                                if ($fs_category !== $last_category) {
+                                    endFSCategory();
+                                    $last_category = $fs_category;
+                                    ++$i;
+                                    // can cleave either one or two spaces from fs_category, fs_option to accomodate more than 9 custom categories
+                                    $cleave_cat = is_numeric(substr($fs_category, 0, 2)) ? 2 : 1;
+                                    $cleave_opt = is_numeric(substr($fs_option, 0, 2)) ? 2 : 1;
+                                    echo ($i <= 1) ? " <tr>\n" : "";
+                                    echo "  <td class='text-nowrap' width='50%'>\n";
+                                    echo "   <select class='form-control' onchange='codeselect(this)'>\n";
+                                    echo "    <option value=''> " . xlt(substr($fs_category, $cleave_cat)) . "</option>\n";
+                                }
+                                echo "    <option value='" . attr($fs_codes) . "'>" . xlt(substr($fs_option, $cleave_opt)) . "</option>\n";
+                            }
+                                endFSCategory();
+
+                                // Create drop-lists based on categories defined within the codes.
+                                $pres = sqlStatement("SELECT option_id, title FROM list_options " .
+                                "WHERE list_id = 'superbill' AND activity = 1 ORDER BY seq");
+                            while ($prow = sqlFetchArray($pres)) {
+                                global $code_types;
+                                ++$i;
+                                echo ($i <= 1) ? " <tr>\n" : "";
+                                echo "  <td class='text-center text-nowrap' width='50%'>\n";
+                                echo "   <select class='form-control' onchange='codeselect(this)'>\n";
+                                echo "    <option value=''> " . text(xl_list_label($prow['title'])) . "\n";
+                                $res = sqlStatement("SELECT code_type, code, code_text,modifier FROM codes " .
+                                "WHERE superbill = ? AND active = 1 " .
+                                "ORDER BY code_text", array($prow['option_id']));
+                                while ($row = sqlFetchArray($res)) {
+                                    $ctkey = $fs->alphaCodeType($row['code_type']);
+                                    if ($code_types[$ctkey]['nofs']) {
+                                        continue;
+                                    }
+                                    echo "    <option value='" . attr($ctkey) . "|" .
+                                    attr($row['code']) . ':' . attr($row['modifier']) . "|'>" . text($row['code_text']) . "</option>\n";
+                                }
+                                echo "   </select>\n";
+                                echo "  </td>\n";
+                                if ($i >= $FEE_SHEET_COLUMNS) {
+                                    echo " </tr>\n";
+                                    $i = 0;
+                                }
+                            }
+
+                                // Create one more drop-list, for Products.
+                            if ($GLOBALS['sell_non_drug_products']) {
+                                ++$i;
+                                echo ($i <= 1) ? " <tr>\n" : "";
+                                echo "  <td class='text-center text-nowrap' width='50%'>\n";
+                                echo "   <select name='Products' class='form-control' onchange='codeselect(this)'>\n";
+                                echo "    <option value=''> " . xlt('Products') . "\n";
+                                $tres = sqlStatement("SELECT dt.drug_id, dt.selector, d.name " .
+                                "FROM drug_templates AS dt, drugs AS d WHERE " .
+                                "d.drug_id = dt.drug_id AND d.active = 1 AND d.consumable = 0 " .
+                                "ORDER BY d.name, dt.selector, dt.drug_id");
+                                while ($trow = sqlFetchArray($tres)) {
+                                    // Skip products that we don't have any of or that the user may not access.
+                                    if (!isProductSelectable($trow['drug_id'])) {
+                                        continue;
+                                    }
+                                    echo "    <option value='PROD|" . attr($trow['drug_id']) . '|' . attr($trow['selector']) . "'>";
+                                    echo text($trow['name']);
+                                    if ($trow['name'] !== $trow['selector']) {
+                                        echo ' / ' . text($trow['selector']);
+                                    }
+                                    echo "</option>\n";
+                                }
+                                echo "   </select>\n";
+                                echo "  </td>\n";
+                                if ($i >= $FEE_SHEET_COLUMNS) {
+                                    echo " </tr>\n";
+                                    $i = 0;
+                                }
+                            }
+
+                            $search_type = $GLOBALS['default_search_code_type'] ?? null;
+                            if (!empty($_POST['search_type'])) {
+                                $search_type = $_POST['search_type'];
+                            }
+
+                                $ndc_applies = true; // Assume all payers require NDC info.
+
+                                echo $i ? "  <td></td>\n </tr>\n" : "";
+                            ?>
+
+                                </table>
+                            </div>
+                        </fieldset> -->
 
                         <fieldset>
-                            <legend><?php echo xlt("Search for Additional Codes")?></legend>
+                            <legend><?php echo xlt("Search for Codes")?></legend>
                                 <div class="text-center">
                                     <div class="form-group">
                                     <?php
@@ -1130,56 +1141,52 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                 </div>
 
                                 <div class="mx-5 mb-3 text-center">
-                                    <div class="form-group md-10">
-                                        <div class="dropdown">
-                                            <input type='text' class="form-control" name='search_term' id="search_term" placeholder="start type..."  autocomplete="off"  onkeyup="javascript:load_data(this.value)" value='' />
-                                            <span id="search_result"></span>
-                                        </div>
-                                        <div class="form-group md-2 mt-1">
-                                            <!-- <input type='submit' class='btn btn-primary' name='bn_search' value='<?php //echo xla('Search');?>' onclick='return this.clicked = true;' /> -->
-                                            <input type='submit' class='btn btn-primary' value='<?php echo xla('Search');?>' onclick='return btncodeselect();' />
+                                    <div class="input-group">
+                                        <input type='text' class="form-control" name='search_term' value='' />
+                                        <div class="input-group-append">
+                                            <input type='submit' class='btn btn-primary' name='bn_search' value='<?php echo xla('Search');?>' onclick='return this.clicked = true;' />
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- <div class="mx-5 mb-3 text-center">
+                                <div class="mx-5 mb-3 text-center">
                                     <?php
-                                   // echo "<td colspan='" . attr($FEE_SHEET_COLUMNS) . "' class='text-center text-nowrap'>\n";
+                                    echo "<td colspan='" . attr($FEE_SHEET_COLUMNS) . "' class='text-center text-nowrap'>\n";
 
                                     // If Search was clicked, do it and write the list of results here.
                                     // There's no limit on the number of results!
                                     //
-                                    // $numrows = 0;
-                                    // if (!empty($_POST['bn_search']) && !empty($_POST['search_term'])) {
-                                    //     $res = main_code_set_search($search_type, $_POST['search_term']);
-                                    //     if (!empty($res)) {
-                                    //         $numrows = sqlNumRows($res);
-                                    //     }
-                                    // }
-                                    // if (! $numrows) {
-                                    //     echo "   <select name='search_results' class='form-control text-danger' " .
-                                    //     "onchange='codeselect(this)' disabled >\n";
-                                    // } else {
-                                    //     echo "   <select name='search_results' style='background: var(--yellow)' " .
-                                    //     "onchange='codeselect(this)' >\n";
-                                    // }
+                                    $numrows = 0;
+                                    if (!empty($_POST['bn_search']) && !empty($_POST['search_term'])) {
+                                        $res = main_code_set_search($search_type, $_POST['search_term']);
+                                        if (!empty($res)) {
+                                            $numrows = sqlNumRows($res);
+                                        }
+                                    }
+                                    if (! $numrows) {
+                                        echo "   <select name='search_results' class='form-control text-danger' " .
+                                        "onchange='codeselect(this)' disabled >\n";
+                                    } else {
+                                        echo "   <select name='search_results' style='background: var(--yellow)' " .
+                                        "onchange='codeselect(this)' >\n";
+                                    }
 
-                                    // echo "    <option value=''> " . xlt("Search Results") . " ($numrows " . xlt("items") . ")\n";
+                                    echo "    <option value=''> " . xlt("Search Results") . " ($numrows " . xlt("items") . ")\n";
 
-                                    // if ($numrows) {
-                                    //     while ($row = sqlFetchArray($res)) {
-                                    //         $code = $row['code'];
-                                    //         if ($row['modifier']) {
-                                    //             $code .= ":" . $row['modifier'];
-                                    //         }
-                                    //         echo "    <option value='" . attr($search_type) . "|" . attr($code) . "|'>" . text($code) . " " .
-                                    //         text($row['code_text']) . "</option>\n";
-                                    //     }
-                                    // }
+                                    if ($numrows) {
+                                        while ($row = sqlFetchArray($res)) {
+                                            $code = $row['code'];
+                                            if ($row['modifier']) {
+                                                $code .= ":" . $row['modifier'];
+                                            }
+                                            echo "    <option value='" . attr($search_type) . "|" . attr($code) . "|'>" . text($code) . " " .
+                                            text($row['code_text']) . "</option>\n";
+                                        }
+                                    }
 
-                                    // echo "   </select>\n";
-                                    // ?>
-                                </div> -->
+                                    echo "   </select>\n";
+                                    ?>
+                                </div>
                         </fieldset>
 
                     <?php } // end encounter not billed ?>
@@ -1206,9 +1213,9 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                     <td class='billcell font-weight-bold'><?php echo xlt('Type');?></td>
                                     <td class='billcell font-weight-bold'><?php echo xlt('Code');?></td>
                                     <td class='billcell font-weight-bold'><?php echo xlt('Description');?></td>
-                                    <?php if ($institutional) { ?>
-                                        <td class='billcell font-weight-bold'><?php echo xlt('Revenue');?></td>
-                                    <?php } ?>
+                                    <!-- <?php if ($institutional) { ?>
+                                        <td class='billcell font-weight-bold'><?php //echo xlt('Revenue');?></td>
+                                    <?php } ?> -->
                                     <?php if (modifiers_are_used(true)) { ?>
                                         <td class='billcell font-weight-bold'><?php echo xlt('Modifiers');?></td>
                                     <?php } ?>
@@ -1228,9 +1235,12 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                         <td class='billcell text-center font-weight-bold'<?php echo $justifystyle; ?>><?php echo xlt('Justify');?></td>
                                     <?php } ?>
                                     <td class='billcell text-center font-weight-bold' <?php echo $liprovstyle; ?>><?php echo xlt('Provider/Warehouse');?></td>
-                                    <td class='billcell text-center font-weight-bold'<?php echo $usbillstyle; ?>><?php echo xlt('Note Codes');?></td>
+                                    <!-- <td class='billcell text-center font-weight-bold'<?php //echo $usbillstyle; ?>><?php //echo xlt('Note Codes');?></td> -->
+
+                                    <td class='billcell text-center font-weight-bold'<?php echo $usbillstyle; ?>><?php echo xlt('Is Primary');?></td>
+
                                     <td class='billcell text-center font-weight-bold'<?php echo $usbillstyle; ?>><?php echo xlt('Auth');?></td>
-                                    <?php if (!empty(isset($GLOBALS['gbl_auto_create_rx']))) { ?>
+                                    <?php if (!empty($GLOBALS['gbl_auto_create_rx'])) { ?>
                                         <td class='billcell text-center font-weight-bold'><?php echo xlt('Rx'); ?></td>
                                     <?php } ?>
                                     <td class='billcell text-center font-weight-bold'><?php echo xlt('Delete');?></td>
@@ -1244,7 +1254,9 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                     //
                                     // $bill_lino = 0;
                                 if ($billresult) {
+
                                     foreach ($billresult as $iter) {
+
                                         if (empty($fs->ALLOW_COPAYS) && ($iter["code_type"] == 'COPAY')) {
                                             continue;
                                         }
@@ -1252,6 +1264,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                             continue;
                                         }
                                         // ++$bill_lino;
+
                                         $bill_lino = count($fs->serviceitems);
                                         $bline = $_POST['bill']["$bill_lino"] ?? null;
                                         $del = $bline['del'] ?? null; // preserve Delete if checked
@@ -1265,6 +1278,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                         $ndc_info   = $iter["ndc_info"];
                                         $justify    = trim($iter['justify']);
                                         $notecodes  = trim($iter['notecodes']);
+                                        $isPrimary  = (bool)$iter['is_primary'];
                                         if ($justify) {
                                             $justify = substr(str_replace(':', ',', $justify), 0, strlen($justify) - 1);
                                         }
@@ -1284,7 +1298,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                             if ($fs->pricesAuthorized()) {
                                                 $fee = formatMoneyNumber((trim($bline['price'] ?? 0)) * $units);
                                             }
-                                            $authorized = $bline['auth'];
+                                            $authorized = $bline['auth'] ?? null;
                                             $ndc_info   = '';
                                             if (!empty($bline['ndcnum'])) {
                                                 $ndc_info = 'N4' . trim($bline['ndcnum']) . '   ' . $bline['ndcuom'] .
@@ -1292,7 +1306,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                             }
                                             $justify    = $bline['justify'] ?? null;
                                             $notecodes  = trim($bline['notecodes'] ?? null);
-                                            $provider_id = 0 + (int)$bline['provid'];
+                                            $provider_id = 0 + (int) ($bline['provid'] ?? null);
                                         }
 
                                         if ($iter['code_type'] == 'COPAY') { // moved copay display to below
@@ -1316,11 +1330,16 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                         'justify'     => $justify,
                                         'provider_id' => $provider_id,
                                         'notecodes'   => $notecodes,
+                                        'is_primary' => $isPrimary,
                                         ));
                                     }
+
+
+
                                 }
 
                                 if ($fs->ALLOW_COPAYS) {
+
                                     // Ajil added this 2012-04-28 and I don't know why. The condition above disables it. --Rod
                                     $resMoneyGot = sqlStatement(
                                         "SELECT pay_amount as PatientPay,session_id as id, date(post_time) as date " .
@@ -1350,6 +1369,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                     //
                                 if (!empty($_POST['bill'])) {
                                     foreach ($_POST['bill'] as $key => $iter) {
+
                                         if (!empty($iter["id"])) {
                                             continue; // skip if it came from the database
                                         }
@@ -1368,7 +1388,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
 
                                         // Price display is conditional.
                                         if ($iter['price'] != 'X') {
-                                            $fee = formatMoneyNumber((0 + trim($iter['price'] ?? 0)) * $units);
+                                            $fee = formatMoneyNumber((0 + trim($iter['price'] ?? null)) * $units);
                                         } else {
                                             $fee = $fs->getPrice($iter['pricelevel'], $iter['code_type'], $iter['code']);
                                             $fee = formatMoneyNumber((0 + $fee) * $units);
@@ -1397,6 +1417,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                                 'provider_id' => $iter['provid'],
                                                 'notecodes'   => $iter['notecodes'] ?? null,
                                                 'pricelevel'  => $iter['pricelevel'] ?? null,
+                                                'is_primary' => $iter['is_primary'] ?? null,
                                             )
                                         );
                                     }
@@ -1427,7 +1448,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
 
                                     if (!empty($_POST['prod'])) {
                                         $pline = $_POST['prod']["$prod_lino"];
-                                        $del   = $pline['del'] ?? null; // preserve Delete if checked
+                                        $del   = $pline['del']; // preserve Delete if checked
                                         if ($pline['sale_id'] && !$srow['billed']) {
                                             $convert_units = false;
                                             $units = intval(trim($pline['units']));
@@ -1524,17 +1545,14 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                     }
 
                                     if (!$alertmsg) {
-
                                         foreach ($arrcodes as $codestring) {
                                             if ($codestring === '') {
                                                 continue;
                                             }
-
                                             $arrcode = explode('|', $codestring);
                                             $newtype = $arrcode[0];
                                             $newcode = $arrcode[1];
                                             $newsel  = $arrcode[2];
-
                                             if ($newtype == 'COPAY') {
                                                 $tmp = sqlQuery("SELECT copay FROM insurance_data WHERE pid = ? " .
                                                 "AND type = 'primary' ORDER BY date DESC LIMIT 1", array($fs->pid));
@@ -1566,20 +1584,11 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                                     false
                                                 );
                                             } else {
-
                                                 if (strpos($newcode, ':') !== false) {
                                                     list($code, $modifier) = explode(":", $newcode);
                                                 } else {
-                                                    // Paul modified this if block to display codes after searching with Autocomplete
-                                                    $cquery = sqlQuery("SELECT code, code_type, id FROM codes WHERE " .
-                                                    "code_text = ? LIMIT 1", array($arrcode[0]));
-                                                    $newtype = get_code_type_name($cquery['code_type']);
-                                                    $price = get_price_by_code((int)$cquery['id']);
-                                                    //$code = $newcode;
-                                                    $code = $cquery['code'];
+                                                    $code = $newcode;
                                                     $modifier = '';
-
-
                                                 }
                                                 $ndc_info = '';
                                                 // If HCPCS, find last NDC string used for this code.
@@ -1598,18 +1607,17 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                                     }
                                                 }
 
+                                                $tmp = sqlQuery(
+                                                    "SELECT is_primary FROM codes WHERE code_type = ? AND code = ? LIMIT 1",
+                                                    array($code_types[$newtype]['id'], $code)
+                                                );
                                                 $fs->addServiceLineItem(array(
                                                      'codetype' => $newtype,
                                                      'code' => $code,
-                                                     'code_text' => $arrcode[0],
-                                                     //'ndc_info'    => date('Y-m-d'),
-                                                    'auth'        => '1',
-                                                    'units'       => '1',
-                                                    'fee'         => formatMoneyNumber($price),
-                                                    'price'       => $price
+                                                     'modifier' => trim($modifier),
+                                                     'ndc_info' => $ndc_info,
+                                                     'is_primary' => $temp['is_primary'],
                                                 ));
-
-                                                var_dump($fs->serviceitems);
                                             }
                                         }
                                     }
@@ -1714,7 +1722,11 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
     </button>
     <button type='submit' class='btn btn-secondary btn-undo' name='bn_reopen'
      onclick='return this.clicked = 2;' value='<?php echo xla('Void All Checkouts and Re-Open'); ?>'>
-                                            <?php echo xlt('Void Checkout and Re-Open'); ?>
+                                            <?php if ($GLOBALS['void_checkout_reopen']) {
+                                                echo xlt('Void Checkout and Re-Open');
+                                            } else {
+                                                echo xla('Re-Open');
+                                            }    ?>
     </button>
                                     <?php } else { ?>
     <button type='submit' class='btn btn-secondary btn-undo' name='bn_reopen'
@@ -1780,147 +1792,6 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
     <?php if (!empty($_POST['bn_search'])) { ?>
         document.querySelector("[name='search_term']") . scrollIntoView();
     <?php } ?>
-
-
-    function load_search_history()
-    {
-        var search_query = document.getElementsByName('search_box')[0].value;
-
-        if(search_query == '')
-        {
-
-            fetch("process_autocomplete_data.php", {
-
-                method: "POST",
-
-                body: JSON.stringify({
-                    action:'fetch'
-                }),
-
-                headers:{
-                    'Content-type' : 'application/json; charset=UTF-8'
-                }
-
-            }).then(function(response){
-
-                return response.json();
-
-            }).then(function(responseData){
-
-                if(responseData.length > 0)
-                {
-
-                    var html = '<ul class="list-group">';
-
-                    html += '<li class="list-group-item d-flex justify-content-between align-items-center"><b class="text-primary"><i>Your Recent Searches</i></b></li>';
-
-                    for(var count = 0; count < responseData.length; count++)
-                    {
-
-                        html += '<li class="list-group-item text-muted" style="cursor:pointer"><i class="fas fa-history mr-3"></i><span onclick="get_text(this)">'+responseData[count].search_query+'</span> <i class="far fa-trash-alt float-right mt-1" onclick="delete_search_history('+responseData[count].id+')"></i></li>';
-
-                    }
-
-                    html += '</ul>';
-
-                    document.getElementById('search_result').innerHTML = html;
-
-                }
-
-            });
-
-        }
-    }
-
-
-    function get_text(event)
-    {
-        var string = event.textContent;
-
-        //console.log(string);
-        //fetch api
-
-        fetch("process_autocomplete_data.php", {
-
-            method:"POST",
-
-            body: JSON.stringify({
-                search_query : string
-            }),
-
-            headers : {
-                "Content-type" : "application/json; charset=UTF-8"
-            }
-        }).then(function(response){
-
-            return response.json();
-
-        }).then(function(responseData){
-
-            document.getElementsByName('search_term')[0].value = string;
-
-            document.getElementById('search_result').innerHTML = '';
-
-        });
-
-    }
-
-    function load_data(query)
-    {
-        if(query.length > 2)
-        {
-            var form_data = new FormData();
-
-            form_data.append('query', query);
-
-            var ajax_request = new XMLHttpRequest();
-
-            ajax_request.open('POST', 'process_autocomplete_data.php');
-
-            ajax_request.send(form_data);
-
-            ajax_request.onreadystatechange = function()
-            {
-                if(ajax_request.readyState == 4 && ajax_request.status == 200)
-                {
-                    var response = JSON.parse(ajax_request.responseText);
-
-                    var html = '<div class="list-group">';
-
-                    if(response.length > 0)
-                    {
-                        for(var count = 0; count < response.length; count++)
-                        {
-                            html += '<a href="#" class="list-group-item list-group-item-action" onclick="get_text(this)">'+response[count].code_text+'</a>';
-                        }
-                    }
-                    else
-                    {
-                        html += '<a href="#" class="list-group-item list-group-item-action disabled">No Data Found</a>';
-                    }
-
-                    html += '</div>';
-
-                    document.getElementById('search_result').innerHTML = html;
-                }
-            }
-        }
-        else
-        {
-            document.getElementById('search_result').innerHTML = '';
-        }
-    }
-
-
-    var ignore_element = document.getElementById('search_term');
-
-    document.addEventListener('click', function(event) {
-        var check_click = ignore_element.contains(event.target);
-        if (!check_click)
-        {
-            document.getElementById('search_result').innerHTML = '';
-        }
-    });
 </script>
 </body>
 </html>

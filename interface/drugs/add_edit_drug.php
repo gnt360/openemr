@@ -26,6 +26,7 @@ if (!AclMain::aclCheckCore('admin', 'drugs')) {
 
 // Write a line of data for one template to the form.
 //
+
 function writeTemplateLine($selector, $dosage, $period, $quantity, $refills, $prices, $taxrates, $pkgqty)
 {
     global $tmpl_line_no;
@@ -80,6 +81,7 @@ function writeTemplateLine($selector, $dosage, $period, $quantity, $refills, $pr
 
     echo " </tr>\n";
 }
+
 ?>
 <html>
 <head>
@@ -617,6 +619,7 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
                     $emptyPrices[$prow['option_id']] = '';
                     echo "     <td class='font-weight-bold'>" .
                     generate_display_field(array('data_type' => '1','list_id' => 'pricelevel'), $prow['option_id']) .
+                    " (".$GLOBALS['gbl_currency_symbol'].")".
                     "</td>\n";
                 }
 

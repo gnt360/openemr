@@ -550,7 +550,7 @@ function sqlNumRows($r)
 function HelpfulDie($statement, $sqlerr = '')
 {
 
-    echo "<h2><font color='red'>" . xlt('Query Error') . "</font></h2>";
+    echo "<h2><font color='red'>" . xlt('Query Error') . "</font></h2>". $statement . $sqlerr;
 
     if (!$GLOBALS['sql_string_no_show_screen']) {
         echo "<p><font color='red'>ERROR:</font> " . text($statement) . "</p>";

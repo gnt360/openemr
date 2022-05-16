@@ -10,6 +10,7 @@ class Controller extends Smarty
 
     public function __construct()
     {
+
          parent::__construct();
          $this->template_mod = "general";
          $this->_current_action = "";

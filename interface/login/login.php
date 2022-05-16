@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * Login screen.
  *
@@ -40,6 +41,7 @@ $t = $twig->getTwig();
 // If this script is called with app parameter, validate it without showing other apps.
 //
 // Build a list of valid entries
+
 $emr_app = array();
 $sql = "SELECT option_id, title,is_default FROM list_options WHERE list_id=? and activity=1 ORDER BY seq, option_id";
 $rs = sqlStatement($sql, ['apps']);

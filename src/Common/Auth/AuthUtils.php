@@ -66,6 +66,7 @@ class AuthUtils
 
     public function __construct($mode = '')
     {
+
         // Set mode
         if ($mode == 'login') {
             $this->loginAuth = true;
@@ -260,6 +261,7 @@ class AuthUtils
      */
     private function confirmUserPassword($username, &$password)
     {
+
         // Set variables for log
         if ($this->loginAuth) {
             $event = 'login';
@@ -327,8 +329,10 @@ class AuthUtils
             return false;
         }
 
+
         // Check password
         if (self::useActiveDirectory($username)) {
+
             // ldap authentication
             if (!$this->activeDirectoryValidation($username, $password)) {
                 EventAuditLogger::instance()->newEvent($event, $username, $authGroup, 0, $beginLog . ": " . $ip['ip_string'] . ". user failed ldap authentication");
@@ -336,6 +340,7 @@ class AuthUtils
                 return false;
             }
         } else {
+
             // standard authentication
             // First, ensure the user hash is a valid hash
             if (!AuthHash::hashValid($userSecure['password'])) {
@@ -344,13 +349,18 @@ class AuthUtils
                 $this->preventTimingAttack();
                 return false;
             }
+
             // Second, authentication
             if (!AuthHash::passwordVerify($password, $userSecure['password'])) {
+
                 if ($this->loginAuth || $this->apiAuth) {
                     // Utilize this during logins (and not during standard password checks within openemr such as esign)
+
                     $this->incrementLoginFailedCounter($username);
+
                 }
                 EventAuditLogger::instance()->newEvent($event, $username, $authGroup, 0, $beginLog . ": " . $ip['ip_string'] . ". user password incorrect");
+
                 $this->clearFromMemory($password);
                 return false;
             }
@@ -414,6 +424,8 @@ class AuthUtils
             // Log for authentication that are done, which are not api auth or login auth
             EventAuditLogger::instance()->newEvent('auth', $username, $authGroup, 1, "Auth success: " . $ip['ip_string']);
         }
+
+
         return true;
     }
 
@@ -735,6 +747,9 @@ class AuthUtils
                 return false;
             }
         }
+
+        // var_dump($user);
+        // die();
         return true;
     }
 

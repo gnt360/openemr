@@ -390,7 +390,10 @@ SessionTracker::setupSessionDatabaseTracker();
 $_SESSION["encounter"] = '';
 
 if ($GLOBALS['login_into_facility']) {
+
     $facility_id = $_POST['facility'];
+
+
     if ($facility_id === 'user_default') {
         //get the default facility of login user from users table
         $facilityService = new FacilityService();

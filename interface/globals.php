@@ -154,7 +154,6 @@ if (empty($_SESSION['site_id']) || !empty($_GET['site'])) {
             if ((isset($_GET['auth'])) && ($_GET['auth'] == "logout")) {
                 $GLOBALS['login_screen'] = "login_screen.php";
                 $srcdir = "../library";
-                //$interfacedir = "../interface";
                 require_once("$srcdir/auth.inc");
             }
             die("Site ID is missing from session data!");
@@ -337,10 +336,13 @@ if (!empty($glrow)) {
         $temp_authuserid = $_SESSION['authUserID'];
     } else {
         if (!empty($_POST['authUser'])) {
+
             $temp_sql_ret = sqlQueryNoLog("SELECT `id` FROM `users` WHERE BINARY `username` = ?", array($_POST['authUser']));
+
             if (!empty($temp_sql_ret['id'])) {
               //Set the user id from the login variable
                 $temp_authuserid = $temp_sql_ret['id'];
+
             }
         }
     }
@@ -359,6 +361,8 @@ if (!empty($glrow)) {
             $gl_user[$iter] = $row;
         }
     }
+
+
 
   // Set global parameters from the database globals table.
   // Some parameters require custom handling.

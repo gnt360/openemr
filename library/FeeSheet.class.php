@@ -420,6 +420,7 @@ class FeeSheet
   //  provider_id
   //  notecodes
   //  pricelevel
+  // is_primary
     public function addServiceLineItem($args)
     {
         global $code_types;
@@ -448,6 +449,7 @@ class FeeSheet
         // Price level should be unset only if adding a new line item.
         $pricelevel  = isset($args['pricelevel']) ? $args['pricelevel'] : $this->patient_pricelevel;
         $del         = !empty($args['del']);
+        $isPrimary = isset($args['is_primary']) ? $args['is_primary'] : false;
 
         // If using line item billing and user wishes to default to a selected provider, then do so.
         if (!empty($GLOBALS['default_fee_sheet_line_item_provider']) && !empty($GLOBALS['support_fee_sheet_line_item_provider'])) {
@@ -468,7 +470,7 @@ class FeeSheet
 
         // Get the matching entry from the codes table.
         $sqlArray = array();
-        $query = "SELECT id, units, code_text, revenue_code FROM codes WHERE " .
+        $query = "SELECT id, units, code_text, revenue_code, is_primary FROM codes WHERE " .
         "code_type = ? AND code = ?";
         array_push($sqlArray, ($code_types[$codetype]['id'] ?? ''), $code);
         if ($modifier) {
@@ -481,6 +483,7 @@ class FeeSheet
         $result = sqlQuery($query, $sqlArray);
         $codes_id = $result['id'] ?? null;
         $revenue_code = $revenue_code ? $revenue_code : ($result['revenue_code'] ?? null);
+        $isPrimary = isset($result['is_primary']) ? $result['is_primary'] : false;
         if (!$code_text) {
             $code_text = $result['code_text'] ?? null;
             if (empty($units) && !empty($result)) {
@@ -538,6 +541,7 @@ class FeeSheet
         $li['hidden']['billed'] = $billed;
         $li['hidden']['id'] = $id;
         $li['hidden']['codes_id'] = $codes_id;
+        $li['hidden']['is_primary'] = $isPrimary;
 
         // This logic is only used for family planning clinics, and then only when
         // the option is chosen to use or auto-generate Contraception forms.
@@ -584,6 +588,7 @@ class FeeSheet
         $li['del'      ] = $id && $del;
         $li['code_text'] = $code_text;
         $li['auth'     ] = $auth;
+        $li['is_primary'] = (bool)$isPrimary;
 
         $li['hidden']['price'] = $li['price'];
 
@@ -920,6 +925,7 @@ class FeeSheet
     ) {
         global $code_types;
 
+
         if (isset($main_provid) && $main_supid == $main_provid) {
             $main_supid = 0;
         }
@@ -931,11 +937,14 @@ class FeeSheet
         $mod0 = ''; // takes the modifier of the first fee type code type entry from the fee sheet, against which the copay is posted
 
         if (is_array($bill)) {
+
             foreach ($bill as $iter) {
                         // Skip disabled (billed) line items.
                 if (!empty($iter['billed'])) {
                     continue;
                 }
+
+
 
                 $id        = $iter['id'] ?? null;
                 $code_type = $iter['code_type'];
@@ -948,6 +957,7 @@ class FeeSheet
                 $justify   = empty($iter['justify'  ]) ? '' : trim($iter['justify']);
                 $notecodes = empty($iter['notecodes']) ? '' : trim($iter['notecodes']);
                 $provid    = empty($iter['provid'   ]) ? 0 : intval($iter['provid']);
+                $isPrimary = isset($iter['is_primary']) ? $iter['is_primary'] : false;
 
                 $price = 0;
                 if (!empty($iter['price'])) {
@@ -1130,6 +1140,7 @@ class FeeSheet
                     $logarr = array($code_type, $code, '', $pricelevel, $fee, $units, $provid, '');
                     $this->logFSMessage(xl('Item added'), '', $logarr);
                     $code_text = lookup_code_descriptions($code_type . ":" . $code . ":" . $modifier);
+
                     BillingUtilities::addBilling(
                         $this->encounter,
                         $code_type,
@@ -1147,7 +1158,8 @@ class FeeSheet
                         $notecodes,
                         $pricelevel,
                         $revenue_code,
-                        $this->payer_id
+                        $this->payer_id,
+                        $isPrimary
                     );
                 }
             } // end for

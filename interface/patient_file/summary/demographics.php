@@ -940,6 +940,8 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                         $patientbalance = get_patient_balance($pid, false);
                         $insurancebalance = get_patient_balance($pid, true) - $patientbalance;
                         $totalbalance = $patientbalance + $insurancebalance;
+                        $capitationAccount = get_patient_balance_exaro($pid, true, true);
+                        $feeForServiceAccount = get_patient_balance_exaro($pid, true, false);
                         $id = "billing_ps_expand";
                         $dispatchResult = $ed->dispatch(CardRenderEvent::EVENT_HANDLE, new CardRenderEvent('billing'));
                         $viewArgs = [
@@ -953,6 +955,8 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                             'forceAlwaysOpen' => $forceBillingExpandAlways,
                             'prependedInjection' => $dispatchResult->getPrependedInjection(),
                             'appendedInjection' => $dispatchResult->getAppendedInjection(),
+                            'capitationAccount' => $capitationAccount,
+                            'feeForServiceAccount' => $feeForServiceAccount,
                         ];
 
                         if (!empty($result['billing_note'])) {

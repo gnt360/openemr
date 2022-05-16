@@ -22,6 +22,7 @@ if (empty($site_id) || preg_match('/[^A-Za-z0-9\\-.]/', $site_id)) {
 require_once "sites/$site_id/sqlconf.php";
 
 if ($config == 1) {
+    var_dump($config);
     header("Location: interface/login/login.php?site=$site_id");
 } else {
     header("Location: setup.php?site=$site_id");

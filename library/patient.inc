@@ -1645,9 +1645,79 @@ function get_patient_balance($pid, $with_insurance = false, $eid = false)
             $brow = sqlQuery("SELECT SUM(fee) AS amount FROM billing WHERE " .
             "pid = ? AND encounter = ? AND " .
             "activity = 1", array($pid, $encounter));
+
+
+
             $drow = sqlQuery("SELECT SUM(pay_amount) AS payments, " .
               "SUM(adj_amount) AS adjustments FROM ar_activity WHERE " .
               "deleted IS NULL AND pid = ? AND encounter = ?", array($pid, $encounter));
+
+            $srow = sqlQuery("SELECT SUM(fee) AS amount FROM drug_sales WHERE " .
+              "pid = ? AND encounter = ?", array($pid, $encounter));
+            $balance += $brow['amount'] + $srow['amount']
+              - $drow['payments'] - $drow['adjustments'];
+        }
+    }
+
+    return sprintf('%01.2f', $balance);
+}
+
+
+function get_patient_balance_exaro($pid, $with_insurance = false, $isPrimary = false, $eid = false)
+{
+    $balance = 0;
+    $bindarray = array($pid);
+    $sqlstatement = "SELECT date, encounter, last_level_billed, " .
+      "last_level_closed, stmt_count " .
+      "FROM form_encounter WHERE pid = ?";
+    if ($eid) {
+        $sqlstatement .= " AND encounter = ?";
+        array_push($bindarray, $eid);
+    }
+    $feres = sqlStatement($sqlstatement, $bindarray);
+    while ($ferow = sqlFetchArray($feres)) {
+        $encounter = $ferow['encounter'];
+        $dos = substr($ferow['date'], 0, 10);
+        $insarr = getEffectiveInsurances($pid, $dos);
+        $inscount = count($insarr);
+        if (!$with_insurance && $ferow['last_level_closed'] < $inscount && $ferow['stmt_count'] == 0) {
+            // It's out to insurance so only the co-pay might be due.
+            $brow = sqlQuery(
+                "SELECT SUM(fee) AS amount FROM billing WHERE " .
+                "pid = ? AND encounter = ? AND " .
+                "code_type = 'copay' AND activity = 1",
+                array($pid, $encounter)
+            );
+            $drow = sqlQuery(
+                "SELECT SUM(pay_amount) AS payments " .
+                "FROM ar_activity WHERE " .
+                "deleted IS NULL AND pid = ? AND encounter = ? AND payer_type = 0",
+                array($pid, $encounter)
+            );
+            // going to comment this out for now since computing future copays doesn't
+            // equate to cash in hand, which shows in the Billing widget in dashboard 4-23-21
+            // $copay = !empty($insarr[0]['copay']) ? $insarr[0]['copay'] * 1 : 0;
+            $copay = 0;
+
+            $amt = !empty($brow['amount']) ? $brow['amount'] * 1 : 0;
+            $pay = !empty($drow['payments']) ? $drow['payments'] * 1 : 0;
+            $ptbal = $copay + $amt - $pay;
+            if ($ptbal) { // @TODO check if we want to show patient payment credits.
+                $balance += $ptbal;
+            }
+        } else {
+
+            // Including insurance or not out to insurance, everything is due.
+            $brow = sqlQuery("SELECT SUM(fee) AS amount FROM billing WHERE " .
+            "pid = ? AND encounter = ? AND is_primary = ? AND " .
+            "activity = 1", array($pid, $encounter, $isPrimary));
+
+
+
+            $drow = sqlQuery("SELECT SUM(pay_amount) AS payments, " .
+              "SUM(adj_amount) AS adjustments FROM ar_activity WHERE " .
+              "deleted IS NULL AND pid = ? AND encounter = ?", array($pid, $encounter));
+
             $srow = sqlQuery("SELECT SUM(fee) AS amount FROM drug_sales WHERE " .
               "pid = ? AND encounter = ?", array($pid, $encounter));
             $balance += $brow['amount'] + $srow['amount']

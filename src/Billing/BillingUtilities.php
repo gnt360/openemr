@@ -1394,8 +1394,10 @@ class BillingUtilities
         $notecodes = '',
         $pricelevel = '',
         $revenue_code = "",
-        $payer_id = ""
+        $payer_id = "",
+        $isPrimary
     ) {
+
         if (!$authorized) {
             $authorized = "0";
         }
@@ -1411,12 +1413,12 @@ class BillingUtilities
 
         $sql = "INSERT INTO billing (date, encounter, code_type, code, code_text, " .
             "pid, authorized, user, groupname, activity, billed, provider_id, " .
-            "modifier, units, fee, ndc_info, justify, notecodes, pricelevel, revenue_code, payer_id) VALUES (" .
-            "NOW(), ?, ?, ?, ?, ?, ?, ?, ?,  1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "modifier, units, fee, ndc_info, justify, notecodes, pricelevel, revenue_code, payer_id, is_primary) VALUES (" .
+            "NOW(), ?, ?, ?, ?, ?, ?, ?, ?,  1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
 
         return sqlInsert($sql, array($encounter_id, $code_type, $code, $code_text, $pid, $authorized,
             $_SESSION['authUserID'], $_SESSION['authProvider'], $billed, $provider, $modifier, $units, $fee,
-            $ndc_info, $justify, $notecodes, $pricelevel, $revenue_code, $payer_id));
+            $ndc_info, $justify, $notecodes, $pricelevel, $revenue_code, $payer_id, $isPrimary));
     }
 
     public static function authorizeBilling($id, $authorized = "1")

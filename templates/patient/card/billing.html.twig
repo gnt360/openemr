@@ -7,8 +7,12 @@
         <div class="col">{{ patientBalance|money|text }}</div>
     </div>
     <div class="row">
-        <div class="col-4">{{ "Insurance Balance Due"|xlt }}</div>
-        <div class="col">{{ insuranceBalance|money|text }}</div>
+        <div class="col-4">{{ "Capitation Balance Due"|xlt }}</div>
+        <div class="col">{{ capitationAccount|money|text }}</div>
+    </div>
+    <div class="row">
+        <div class="col-4">{{ "FFS Balance Due"|xlt }}</div>
+        <div class="col">{{ feeForServiceAccount|money|text }}</div>
     </div>
     <div class="row">
         <div class="col-4 font-weight-bold">{{ "Total Balance Due"|xlt }}</div>

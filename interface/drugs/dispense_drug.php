@@ -39,32 +39,33 @@ function send_email($subject, $body)
     }
 }
 
-$sale_id         = isset($_REQUEST['sale_id']);
-$drug_id         = isset($_REQUEST['drug_id']);
-$prescription_id = isset($_REQUEST['prescription']);
-$quantity        = isset($_REQUEST['quantity']);
-$fee             = isset($_REQUEST['fee']);
-$user            = isset($_SESSION['authUser']);
+//paul modified  line 44 to 48
+$sale_id         = isset($_REQUEST['sale_id']) ? $_REQUEST['sale_id'] : null;
+$drug_id         = isset($_REQUEST['drug_id']) ? $_REQUEST['drug_id'] : 0;
+$prescription_id = isset($_REQUEST['prescription']) ? $_REQUEST['prescription'] : 0;
+$quantity        = isset($_REQUEST['quantity']) ? $_REQUEST['quantity']: 0;
+$fee             = isset($_REQUEST['fee']) ? $_REQUEST['fee'] : 0;
+$user            = isset($_SESSION['authUser']) ? $_SESSION['authUser'] : 0;
 
 if (!AclMain::aclCheckCore('admin', 'drugs')) {
     die(xl('Not authorized'));
 }
 
-if (!$drug_id) {
-    $drug_id = 0;
-}
+// if (!$drug_id) {
+//     $drug_id = 0;
+// }
 
-if (!$prescription_id) {
-    $prescription_id = 0;
-}
+// if (!$prescription_id) {
+//     $prescription_id = 0;
+// }
 
-if (!$quantity) {
-    $quantity = 0;
-}
+// if (!$quantity) {
+//     $quantity = 0;
+// }
 
-if (!$fee) {
-    $fee = 0.00;
-}
+// if (!$fee) {
+//     $fee = 0.00;
+// }
 
 $inventory_id = 0;
 $bad_lot_list = '';
@@ -72,10 +73,11 @@ $today = date('Y-m-d');
 
 // If there is no sale_id then this is a new dispensation.
 //
-if (! $sale_id) {
+if (!$sale_id) {
   // Post the order and update inventory, deal with errors.
   //
     if ($drug_id) {
+
         $sale_id = sellDrug($drug_id, $quantity, $fee, $pid, 0, $prescription_id, $today, $user);
         if (!$sale_id) {
             die(xlt('Inventory is not available for this order.'));
@@ -245,19 +247,21 @@ body {
 </head>
 <body leftmargin='0' topmargin='0' marginwidth='0' marginheight='0'>
 <center>
-<table border='0' cellpadding='0' cellspacing='0' style='width: 200pt'>
+<p>Drug dispensed!</p>
+<!-- comment out to remove print label after save and dispense-->
+<!-- <table border='0' cellpadding='0' cellspacing='0' style='width: 200pt'>
  <tr><td class="labtop" nowrap>
-        <?php echo nl2br(text($header_text)); ?>
+        <?php //echo nl2br(text($header_text)); ?>
  </td></tr>
  <tr><td style='background-color: #000000; height: 5pt;'></td></tr>
  <tr><td class="labbot" nowrap>
-        <?php echo nl2br(text($label_text)); ?>
+        <?php //echo nl2br(text($label_text)); ?>
  </td></tr>
-</table>
+</table> -->
 </center>
 <script>
- var win = top.printLogPrint ? top : opener.top;
- win.printLogPrint(window);
+//  var win = top.printLogPrint ? top : opener.top;
+//  win.printLogPrint(window);
 </script>
 </body>
 </html>

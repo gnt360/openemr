@@ -60,10 +60,10 @@ class C_Prescription extends Controller
             // $res = sqlStatement("SELECT * FROM drugs ORDER BY selector");
 
             $res = sqlStatement("SELECT d.name, d.ndc_number, d.form, d.size, " .
-                "d.unit, d.route, d.substitute, t.drug_id, t.selector, t.dosage, " .
-                "t.period, t.quantity, t.refills, d.drug_code " .
-                "FROM drug_templates AS t, drugs AS d WHERE " .
-                "d.drug_id = t.drug_id ORDER BY t.selector");
+            "d.unit, d.route, d.substitute, t.drug_id, t.selector, t.dosage, " .
+            "t.period, t.quantity, t.refills, d.drug_code, p.pr_price " .
+            "FROM drug_templates AS t, drugs AS d, prices AS p WHERE " .
+            "d.drug_id = t.drug_id AND d.drug_id = p.pr_id AND t.selector = p.pr_selector ORDER BY t.selector");
 
             while ($row = sqlFetchArray($res)) {
                 $tmp_output = $row['selector'];
@@ -89,7 +89,8 @@ class C_Prescription extends Controller
                     js_escape($row['quantity'])   . ","   . //  8
                     js_escape($row['refills'])    . ","   . //  9
                     js_escape($row['quantity'])   . ","   . //  10 quantity per_refill
-                    js_escape($row['drug_code'])  . "]";    //  11 rxnorm drug code
+                    js_escape($row['drug_code'])  . "," .  //  11 rxnorm drug code
+                    js_escape($row['pr_price']?? 0)  . "]";    //  12
             }
 
             $this->assign("DRUG_ARRAY_VALUES", $drug_array_values);

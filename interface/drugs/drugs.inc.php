@@ -56,13 +56,20 @@ function sellDrug(
     $default_warehouse = '',
     $testonly = false,
     &$expiredlots = null,
-    $pricelevel = '',
+    $pricelevel = 'standard',
     $selector = ''
 ) {
 
     if (empty($patient_id)) {
         $patient_id   = $GLOBALS['pid'];
     }
+
+    //paul added these to grap the encounter Id from session
+    if (empty($encounter_id)) {
+        $encounter_id   = $GLOBALS['encounter'];
+    }
+
+
 
     if (empty($sale_date)) {
         $sale_date    = date('Y-m-d');
